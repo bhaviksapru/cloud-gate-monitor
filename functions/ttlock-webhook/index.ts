@@ -5,7 +5,10 @@ import { createHmac } from "crypto";
 
 const ddb = new DynamoDBClient({});
 const ssm = new SSMClient({});
-const sns = new SNSClient({ region: "us-east-1" });
+// FIX: was hardcoded to "us-east-1" â€” stack deploys to ca-central-1 and SMS
+// sandbox state is per-region, so alerts were silently failing if the sandbox
+// was not also configured in us-east-1.
+const sns = new SNSClient({ region: "ca-central-1" });
 
 const TABLE          = process.env.TABLE_NAME!;
 const DASHBOARD_URL  = process.env.DASHBOARD_URL!;
@@ -59,6 +62,11 @@ function verifySignature(body: string, signature: string, secret: string): boole
 
 async function storeEvent(event: TTLockEvent, nowMs: number): Promise<void> {
   const ts     = String(event.serverDate ?? nowMs);
+  // FIX: lockId was stored as { N: lockId } which throws a DynamoDB
+  // ValidationException when lockId is "unknown" (non-numeric string).
+  // The event was silently dropped because the outer catch returns 200.
+  // Stored as { S } here to be consistent with pk/sk which already use it
+  // as a string, and to safely handle any non-numeric fallback value.
   const lockId = String(event.lockId ?? "unknown");
   const date   = new Date(parseInt(ts)).toISOString().slice(0, 10);
   const time   = new Date(parseInt(ts)).toISOString().slice(11, 19);
@@ -71,7 +79,7 @@ async function storeEvent(event: TTLockEvent, nowMs: number): Promise<void> {
       sk:         { S: `EVENT#${ts}` },
       gsi1pk:     { S: `DATE#${date}` },
       gsi1sk:     { S: `TIME#${time}#LOCK#${lockId}` },
-      lockId:     { N: lockId },
+      lockId:     { S: lockId },
       recordType: { N: String(event.recordType ?? 0) },
       success:    { N: String(event.success ?? 0) },
       username:   { S: event.username ?? "" },
@@ -83,12 +91,6 @@ async function storeEvent(event: TTLockEvent, nowMs: number): Promise<void> {
 }
 
 async function checkCounter(lockId: string, nowMs: number, windowMinutes: number, threshold: number): Promise<{ count: number; shouldAlert: boolean }> {
-  // FIX: windowStart now stores the timestamp of the first event in the current
-  // window (i.e. nowMs at that point), NOT (nowMs - windowDuration).
-  // The old code set windowStart = nowMs - windowDuration on every call, so
-  // existingStart was always less than the newly computed windowStart, causing
-  // the "still active" check to always fail and the counter to reset every event.
-  // That made threshold > 1 impossible to reach.
   const windowDurationMs = windowMinutes * 60 * 1000;
 
   const { Item } = await ddb.send(new GetItemCommand({
@@ -104,9 +106,8 @@ async function checkCounter(lockId: string, nowMs: number, windowMinutes: number
     const windowStillActive   = (nowMs - existingWindowStart) <= windowDurationMs;
     if (windowStillActive) {
       count          = existingCount + 1;
-      newWindowStart = existingWindowStart; // preserve original window boundary
+      newWindowStart = existingWindowStart;
     }
-    // else: window expired — reset to count=1, newWindowStart=nowMs
   }
 
   const ttl = Math.floor(nowMs / 1000) + windowMinutes * 90;

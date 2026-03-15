@@ -77,6 +77,8 @@ BUCKET=$(aws cloudformation describe-stacks \
   --query "Stacks[0].Outputs[?OutputKey=='VideoBucket'].OutputValue" \
   --output text)
 
+# Note: vite.config.ts sets outDir to ../dist (project root), so build output
+# lands at dist/ relative to the project root after `cd ..`
 aws s3 sync dist/ "s3://$BUCKET/" \
   --delete --cache-control "public,max-age=31536000,immutable" --exclude "index.html"
 aws s3 cp dist/index.html "s3://$BUCKET/index.html" \

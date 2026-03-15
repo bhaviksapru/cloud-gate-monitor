@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { isAuthenticated, redirectToLogin, handleCallback, logout } from "./auth";
+import { getAccessToken, redirectToLogin, handleCallback, logout } from "./auth";
 import Dashboard from "./components/Dashboard";
 
 export default function App() {
@@ -13,7 +13,13 @@ export default function App() {
         setReady(true);
         return;
       }
-      if (!isAuthenticated()) { await redirectToLogin(); return; }
+      // FIX: was calling isAuthenticated() which returns false the moment the
+      // 1-hour access token expires, even when a valid 7-day refresh token
+      // exists — triggering a full Cognito redirect on every page load after
+      // the first hour. getAccessToken() transparently refreshes the token
+      // when expired and only returns null when there is truly no valid session.
+      const token = await getAccessToken();
+      if (!token) { await redirectToLogin(); return; }
       setReady(true);
     })();
   }, []);

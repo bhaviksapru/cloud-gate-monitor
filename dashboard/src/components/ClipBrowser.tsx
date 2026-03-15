@@ -78,11 +78,18 @@ export default function ClipBrowser() {
 
   const cameras = [...new Set(clips.map(c => c.camera))];
 
+  // FIX: was an unhandled async throw — React does not catch promise rejections
+  // from event handlers, so a failed API call silently broke pagination with no
+  // user feedback and a noisy unhandled rejection in the console.
   async function loadMore() {
     if (!nextToken) return;
-    const r = await api.clips(camera || undefined, date, nextToken);
-    setClips(prev => [...prev, ...r.clips]);
-    setNextToken(r.nextToken);
+    try {
+      const r = await api.clips(camera || undefined, date, nextToken);
+      setClips(prev => [...prev, ...r.clips]);
+      setNextToken(r.nextToken);
+    } catch (e) {
+      setError(String(e));
+    }
   }
 
   return (

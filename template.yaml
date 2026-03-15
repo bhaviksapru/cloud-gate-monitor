@@ -103,11 +103,26 @@ Resources:
           AllowedMethods: [GET, HEAD, OPTIONS]
           Compress: true
         CacheBehaviors:
+          # FIX: live/* must be listed BEFORE live/*.m3u8 is evaluated — CloudFront
+          # matches most-specific pattern first, so live/*.m3u8 still wins for
+          # playlists. This catch-all for live/* (segments + any other live path)
+          # uses CachingDisabled and has NO custom error response override, so
+          # 403/404s on cycled-out .ts segments are passed through to hls.js as
+          # real errors instead of being swallowed as 200 index.html responses.
+          - PathPattern: "live/*"
+            TargetOriginId: s3
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad   # CachingDisabled
+            AllowedMethods: [GET, HEAD, OPTIONS]
           - PathPattern: "live/*.m3u8"
             TargetOriginId: s3
             ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad   # CachingDisabled
             AllowedMethods: [GET, HEAD, OPTIONS]
+        # CustomErrorResponses are intentionally scoped only to non-live paths
+        # (CloudFront applies them only when no CacheBehavior matches, i.e. the
+        # DefaultCacheBehavior — which covers the SPA assets). The live/* behavior
+        # above ensures segment/playlist paths never reach this fallback.
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 200
@@ -266,7 +281,6 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: "cgm/*"
         - Statement:
-            # sns:RequestDestination is not a real IAM condition key; removed to unblock SNS Publish
             - Effect: Allow
               Action: sns:Publish
               Resource: "*"
