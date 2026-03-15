@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>cloud-gate-monitor — Financial Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#080909; --dark:#0d0f0f; --panel:#111414; --panel2:#161919;
+      --border:#212525; --border2:#2b3030;
+      --amber:#f5a623; --amber-dim:#c47d0e; --amber-glow:rgba(245,166,35,0.07);
+      --white:#ede9e0; --muted:#5e6464; --text:#aaa69e;
+      --green:#4caf7d; --red:#e05555; --yellow:#f5c623; --blue:#5b8de8;
+    }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.5; }
+
+    .doc-header { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 6vw; height:58px; background:var(--bg); border-bottom:1px solid var(--border); }
+    .doc-num-badge { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:var(--amber); letter-spacing:0.08em; border:1px solid var(--amber-dim); padding:0.15rem 0.55rem; background:var(--amber-glow); line-height:1.4; }
+    .doc-header-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.08em; color:var(--white); margin-left:1rem; }
+    .back-link { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:0.5rem; transition:color 0.2s; }
+    .back-link:hover { color:var(--amber); }
+
+    .page-wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:5rem 6vw 8rem; }
+
+    .eyebrow { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--amber); margin-bottom:1rem; display:flex; align-items:center; gap:0.7rem; }
+    .eyebrow::before { content:''; display:inline-block; width:20px; height:1px; background:var(--amber); }
+    .hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3.5rem,8vw,7rem); line-height:0.9; color:var(--white); margin-bottom:1.5rem; }
+    .hero-sub { font-size:0.9rem; line-height:1.8; color:var(--muted); max-width:640px; margin-bottom:4rem; }
+
+    .section { margin-bottom:4rem; }
+    .section-label { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--amber); margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem; }
+    .section-label::before { content:''; display:inline-block; width:16px; height:1px; background:var(--amber); }
+    .section-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,4vw,3rem); color:var(--white); line-height:1; margin-bottom:1.5rem; }
+
+    .summary-band { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:4rem; }
+    .s-card { background:var(--panel); padding:2rem 1.8rem; position:relative; overflow:hidden; }
+    .s-card::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:2px; background:var(--amber); transform:scaleX(0); transform-origin:left; transition:transform 0.35s ease; }
+    .s-card:hover { background:var(--panel2); }
+    .s-card:hover::after { transform:scaleX(1); }
+    .s-card-val { font-family:'Bebas Neue',sans-serif; font-size:3.4rem; line-height:1; color:var(--amber); margin-bottom:0.4rem; }
+    .s-card-val.green { color:var(--green); }
+    .s-card-label { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); line-height:1.5; }
+
+    .cost-table-wrap { border:1px solid var(--border); background:var(--panel); overflow:hidden; margin-bottom:2rem; }
+    .cost-table { width:100%; border-collapse:collapse; }
+    .cost-table thead tr { background:var(--panel2); border-bottom:1px solid var(--border2); }
+    .cost-table th { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); padding:1rem 1.2rem; text-align:left; font-weight:400; }
+    .cost-table th:last-child { text-align:right; }
+    .cost-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .cost-table tbody tr:last-child { border-bottom:none; }
+    .cost-table tbody tr:hover { background:rgba(245,166,35,0.03); }
+    .cost-table td { padding:0.9rem 1.2rem; font-size:0.8rem; }
+    .cost-table .td-service { font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--white); letter-spacing:0.04em; }
+    .cost-table .td-cost { font-family:'DM Mono',monospace; font-size:0.72rem; text-align:right; }
+    .cost-table .td-cost.free { color:var(--green); }
+    .cost-table .td-cost.low  { color:var(--text); }
+    .cost-table .td-cost.mid  { color:var(--amber); }
+    .cost-table .td-note { font-size:0.72rem; color:var(--muted); }
+    .cost-table tfoot tr { border-top:2px solid var(--amber-dim); background:var(--amber-glow); }
+    .cost-table tfoot td { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.06em; padding:1rem 1.2rem; }
+    .cost-table tfoot .td-service { color:var(--amber); }
+    .cost-table tfoot .td-cost { color:var(--amber); font-family:'Bebas Neue',sans-serif; font-size:1.05rem; }
+
+    .tier-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:0.5rem; vertical-align:middle; flex-shrink:0; }
+    .tier-dot.free { background:var(--green); }
+    .tier-dot.low  { background:var(--text); }
+    .tier-dot.mid  { background:var(--amber); }
+
+    .compare-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:2rem; }
+    .compare-card { background:var(--panel); padding:2rem 2rem; position:relative; }
+    .compare-card.winner { background:var(--panel2); }
+    .compare-card.winner::before { content:'WINNER'; position:absolute; top:1.2rem; right:1.2rem; font-family:'DM Mono',monospace; font-size:0.52rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); background:var(--amber-glow); border:1px solid var(--amber-dim); padding:0.2rem 0.6rem; }
+    .compare-label { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:0.6rem; }
+    .compare-name { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; color:var(--white); line-height:1; margin-bottom:1.2rem; }
+    .compare-price { font-family:'Bebas Neue',sans-serif; font-size:4rem; line-height:1; margin-bottom:0.3rem; }
+    .compare-price.expensive { color:var(--red); }
+    .compare-price.cheap { color:var(--green); }
+    .compare-price-sub { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; color:var(--muted); margin-bottom:1.5rem; }
+    .compare-feature { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.04em; color:var(--muted); padding:0.4rem 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.5rem; }
+    .compare-feature:last-child { border-bottom:none; }
+    .cf-check { color:var(--green); }
+    .cf-cross  { color:var(--red); }
+
+    .inline-note { border-left:2px solid var(--amber-dim); padding:0.6rem 1rem; margin:1rem 0 1.5rem; background:var(--amber-glow); font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.04em; color:var(--muted); line-height:1.6; }
+    .inline-note strong { color:var(--amber); }
+
+    .scaling-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:2rem; }
+    .scaling-cell { background:var(--panel); padding:1.5rem 1.6rem; }
+    .scaling-val { font-family:'Bebas Neue',sans-serif; font-size:2.6rem; color:var(--amber); line-height:1; margin-bottom:0.3rem; }
+    .scaling-label { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+
+    .doc-footer { margin-top:5rem; padding-top:2rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    .footer-note { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.1em; color:var(--muted); }
+    .footer-brand { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.08em; color:var(--white); }
+    .footer-brand span { color:var(--amber); }
+
+    @media(max-width:900px){ .summary-band { grid-template-columns:1fr 1fr; } .compare-grid { grid-template-columns:1fr; } .scaling-grid { grid-template-columns:1fr 1fr; } }
+    @media(max-width:600px){ .summary-band { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <div style="display:flex;align-items:center;">
+      <div class="doc-num-badge">03</div>
+      <div class="doc-header-title">Financial Analysis</div>
+    </div>
+    <a class="back-link" href="../index.html">← Back to overview</a>
+  </header>
+
+  <div class="page-wrap">
+
+    <div class="eyebrow">Cost Architecture · AWS ca-central-1</div>
+    <h1 class="hero-title">Financial<br/>Analysis</h1>
+    <p class="hero-sub">
+      Complete cost breakdown for cloud-gate-monitor at 1–4 cameras. 
+      S3 PUT requests for HLS segments dominate — everything else is negligible at home-monitoring scale. 
+      Total: ~$1.50/camera/month.
+    </p>
+
+    <!-- SUMMARY CARDS -->
+    <div class="section">
+      <div class="section-label">Bottom Line</div>
+      <div class="section-title">Cost Summary</div>
+      <div class="summary-band">
+        <div class="s-card">
+          <div class="s-card-val">~$1.50</div>
+          <div class="s-card-label">Per camera<br/>per month</div>
+        </div>
+        <div class="s-card">
+          <div class="s-card-val">~$2.80</div>
+          <div class="s-card-label">2 cameras<br/>total monthly</div>
+        </div>
+        <div class="s-card">
+          <div class="s-card-val green">7 days</div>
+          <div class="s-card-label">Clip retention<br/>S3 lifecycle rule</div>
+        </div>
+        <div class="s-card">
+          <div class="s-card-val green">$0</div>
+          <div class="s-card-label">Compute cost<br/>Lambda/DDB/IoT</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARISON: self-hosted vs NVR vs cloud services -->
+    <div class="section">
+      <div class="section-label">Alternatives</div>
+      <div class="section-title">Cloud Storage Options</div>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="compare-label">Commercial</div>
+          <div class="compare-name">Tapo Care<br/>Cloud Storage</div>
+          <div class="compare-price expensive">$4</div>
+          <div class="compare-price-sub">per camera / month</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>Zero setup, app-native</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>Per-camera fee, scales badly</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>No TTLock integration</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>No custom alerts or API</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>Vendor lock-in</div>
+        </div>
+        <div class="compare-card winner">
+          <div class="compare-label">This Project</div>
+          <div class="compare-name">cloud-gate-monitor<br/>on AWS</div>
+          <div class="compare-price cheap">$1.50</div>
+          <div class="compare-price-sub">per camera / month</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>~60% cheaper than Tapo Care</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>TTLock gate integration + SMS</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>Custom React dashboard + TOTP MFA</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>7-day clip storage, live HLS</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>No IAM keys on Pi — IoT X.509</div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-label">Alternative</div>
+          <div class="compare-name">Local NVR<br/>(Synology/QNAP)</div>
+          <div class="compare-price" style="color:var(--text);">$0</div>
+          <div class="compare-price-sub">ongoing / month (hardware ~$400)</div>
+          <div class="compare-feature"><span class="cf-check">✓</span>No ongoing cloud cost</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>~$400 upfront hardware</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>No remote access without VPN</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>Power + maintenance overhead</div>
+          <div class="compare-feature"><span class="cf-cross">✗</span>No TTLock integration</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COST TABLE -->
+    <div class="section">
+      <div class="section-label">Service-by-Service</div>
+      <div class="section-title">Monthly Itemisation — 2 Cameras</div>
+
+      <div class="cost-table-wrap">
+        <table class="cost-table">
+          <thead>
+            <tr><th>Service</th><th>Monthly Cost</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-service"><span class="tier-dot mid"></span>S3 PUTs — HLS segments</td>
+              <td class="td-cost mid">$1.80</td>
+              <td class="td-note">
+                hls_time=10s → 6 segments/min × 2 cams × 43,200 min/month = ~518,400 PUTs. 
+                $0.0035/1,000 PUTs = $1.81. Dominant cost driver.
+              </td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot low"></span>S3 Storage — clips (7-day rolling)</td>
+              <td class="td-cost low">$0.52</td>
+              <td class="td-note">
+                ~2 cameras × 720Kbps avg × 300s/clip × ~2,016 clips in 7 days ≈ ~38GB at $0.023/GB. 
+                S3 lifecycle deletes after 7 days.
+              </td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot low"></span>S3 Storage — live HLS (1-day rolling)</td>
+              <td class="td-cost low">$0.06</td>
+              <td class="td-note">~5 × 10s segments × 2 cams × ~2.5MB each = &lt;1GB/day rolling window. Negligible.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot low"></span>CloudFront data transfer out</td>
+              <td class="td-cost low">$0.20</td>
+              <td class="td-note">Estimated ~2GB/month dashboard usage (HLS playback + clip browsing). First 1TB free tier offsets most.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>Lambda — 3 functions</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">Webhook: ~500 events/month. Clip/Events API: ~200 calls/month. &lt;100MB-seconds total. Free tier: 400,000 GB-seconds/month.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>API Gateway — HTTP API</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">~700 requests/month (dashboard API + webhooks). Free tier: 1M requests/month.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>DynamoDB — cgm-events table</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">~500 events/month × ~1KB = &lt;1MB storage. Reads/writes negligible. Free tier covers entirely.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>AWS IoT Core — credential provider</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">Pi refreshes credentials hourly. ~720 requests/month. IoT credential provider: $0.02/million requests.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>SNS — SMS alerts</td>
+              <td class="td-cost free">~$0.00</td>
+              <td class="td-note">Transactional SMS: ~$0.00645/message to Canada. 0–5 alerts/month = &lt;$0.04. Negligible.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>SSM Parameter Store</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">4 standard parameters. Standard tier is free. Reads: ~500/month (webhook Lambda). Free.</td>
+            </tr>
+            <tr>
+              <td class="td-service"><span class="tier-dot free"></span>Cognito User Pool</td>
+              <td class="td-cost free">$0.00</td>
+              <td class="td-note">1 MAU (invite-only). Free tier: 50,000 MAUs/month permanently.</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="td-service">Total — 2 cameras</td>
+              <td class="td-cost">~$2.58</td>
+              <td class="td-note" style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;">
+                On-demand pricing · 24/7 recording · 7-day clip retention
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="inline-note">
+        <strong>S3 PUTs are the only meaningful cost.</strong> 
+        Each HLS segment write = 1 PUT request. With hls_time=10 already set in stream.sh, 
+        this is already optimised. Increasing hls_time to 15 would reduce PUTs by 33% (~$0.60 saving) 
+        at the cost of slightly higher live stream latency.
+      </div>
+    </div>
+
+    <!-- SCALING BY CAMERA COUNT -->
+    <div class="section">
+      <div class="section-label">Camera Count</div>
+      <div class="section-title">Cost at Scale</div>
+
+      <div class="scaling-grid">
+        <div class="scaling-cell">
+          <div class="scaling-val">~$1.50</div>
+          <div class="scaling-label">1 camera<br/>per month</div>
+        </div>
+        <div class="scaling-cell">
+          <div class="scaling-val">~$2.80</div>
+          <div class="scaling-label">2 cameras<br/>per month</div>
+        </div>
+        <div class="scaling-cell">
+          <div class="scaling-val">~$5.50</div>
+          <div class="scaling-label">4 cameras<br/>per month</div>
+        </div>
+      </div>
+
+      <div class="cost-table-wrap">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Cameras</th>
+              <th>S3 PUTs</th>
+              <th>S3 Storage</th>
+              <th>CloudFront</th>
+              <th>Everything else</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-service">1 <span style="color:var(--muted);font-size:0.6rem;margin-left:0.4rem">baseline</span></td>
+              <td class="td-cost low" style="text-align:left">$0.91</td>
+              <td class="td-cost low" style="text-align:left">$0.29</td>
+              <td class="td-cost low" style="text-align:left">$0.10</td>
+              <td class="td-cost free" style="text-align:left">$0.00</td>
+              <td class="td-cost mid" style="color:var(--amber)">~$1.30</td>
+            </tr>
+            <tr>
+              <td class="td-service">2</td>
+              <td class="td-cost low" style="text-align:left">$1.81</td>
+              <td class="td-cost low" style="text-align:left">$0.52</td>
+              <td class="td-cost low" style="text-align:left">$0.20</td>
+              <td class="td-cost free" style="text-align:left">$0.04</td>
+              <td class="td-cost mid" style="color:var(--amber)">~$2.57</td>
+            </tr>
+            <tr>
+              <td class="td-service">4</td>
+              <td class="td-cost low" style="text-align:left">$3.63</td>
+              <td class="td-cost low" style="text-align:left">$1.04</td>
+              <td class="td-cost low" style="text-align:left">$0.35</td>
+              <td class="td-cost free" style="text-align:left">$0.05</td>
+              <td class="td-cost mid" style="color:var(--amber)">~$5.07</td>
+            </tr>
+            <tr>
+              <td class="td-service">8</td>
+              <td class="td-cost low" style="text-align:left">$7.25</td>
+              <td class="td-cost low" style="text-align:left">$2.07</td>
+              <td class="td-cost low" style="text-align:left">$0.60</td>
+              <td class="td-cost free" style="text-align:left">$0.06</td>
+              <td class="td-cost mid" style="color:var(--amber)">~$9.98</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inline-note">
+        Cost scales almost perfectly linearly with camera count — there are no tiered services that change pricing at typical home volumes. 
+        Lambda, DynamoDB, IoT, SNS, and Cognito remain effectively <strong>free</strong> at any number of home cameras.
+      </div>
+    </div>
+
+    <!-- COST REDUCTION OPTIONS -->
+    <div class="section">
+      <div class="section-label">Optimisation</div>
+      <div class="section-title">Reducing the Bill</div>
+
+      <div class="cost-table-wrap">
+        <table class="cost-table">
+          <thead>
+            <tr><th>Lever</th><th>Saving</th><th>Trade-off</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-service">Increase hls_time from 10s → 15s</td>
+              <td class="td-cost low">−$0.60/mo</td>
+              <td class="td-note">Live stream latency increases from ~30s to ~45s. Still acceptable for home monitoring.</td>
+            </tr>
+            <tr>
+              <td class="td-service">Reduce clip resolution (1080p → 720p)</td>
+              <td class="td-cost low">−$0.15/mo</td>
+              <td class="td-note">Lower storage. Reduce ffmpeg bitrate in stream.sh (-b:v 800k). TAPO C100 streams 1080p natively.</td>
+            </tr>
+            <tr>
+              <td class="td-service">Enable S3 Intelligent-Tiering on clips/</td>
+              <td class="td-cost low">~$0.00</td>
+              <td class="td-note">Objects accessed &lt;30 days — Intelligent-Tiering is not beneficial at 7-day TTL. No saving.</td>
+            </tr>
+            <tr>
+              <td class="td-service">Use S3 Express One Zone for live/ prefix</td>
+              <td class="td-cost low" style="color:var(--red)">+cost</td>
+              <td class="td-note">Express One Zone charges per-request; at HLS segment volume this would cost more. Not recommended.</td>
+            </tr>
+            <tr>
+              <td class="td-service">Schedule Pi to only stream during home-away hours</td>
+              <td class="td-cost low">up to −50%</td>
+              <td class="td-note">If streaming ~12hrs/day instead of 24hrs, halves all S3 costs. Modify stream.sh with time check or use systemd timer.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <div class="footer-note">AWS on-demand pricing · ca-central-1 · estimates as of 2025</div>
+      <div class="footer-brand">cloud-gate-<span>monitor</span></div>
+    </div>
+
+  </div>
+</body>
+</html>
