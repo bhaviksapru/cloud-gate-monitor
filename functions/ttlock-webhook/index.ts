@@ -123,7 +123,7 @@ async function sendSms(phone: string, lockId: string, count: number, threshold: 
 
   await sns.send(new PublishCommand({
     PhoneNumber: phone,
-    Message: `🔴 GATE ALERT\nLock #${lockId}: ${count}/${threshold} failed attempt${count > 1 ? "s" : ""}.\nTime: ${time} ET\nView: ${DASHBOARD_URL}/?view=events`,
+    Message: `GATE ALERT\nLock #${lockId}: ${count}/${threshold} failed attempt${count > 1 ? "s" : ""}.\nTime: ${time} ET\nView: ${DASHBOARD_URL}/?view=events`,
     MessageAttributes: {
       "AWS.SNS.SMS.SMSType":  { DataType: "String", StringValue: "Transactional" },
       "AWS.SNS.SMS.SenderID": { DataType: "String", StringValue: "GATE" },
