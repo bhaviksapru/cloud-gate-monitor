@@ -1,17 +1,733 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex,nofollow" />
-    <title>Gate Monitor</title>
-    <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0d0f14; color: #e2e4e9; min-height: 100vh; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>cloud-gate-monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#080909; --panel:#111414; --panel2:#161919;
+      --border:#212525; --border2:#2b3030;
+      --amber:#f5a623; --amber-dim:#c47d0e; --amber-glow:rgba(245,166,35,0.07);
+      --white:#ede9e0; --muted:#5e6464; --text:#aaa69e;
+      --green:#4caf7d; --red:#e05555; --yellow:#f5c623; --teal:#2acebe;
+      --h:58px;
+    }
+    html, body { height:100%; }
+    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.5; }
+
+    #site-header { position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:0 6vw; height:var(--h); background:var(--bg); border-bottom:1px solid var(--border); gap:1rem; }
+    .sub-tab-nav { display:flex; gap:0; border:1px solid var(--border2); flex-shrink:0; }
+    .sub-tab-btn { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; padding:0.48rem 1.3rem; background:none; border:none; color:var(--muted); cursor:pointer; transition:color 0.2s, background 0.2s; line-height:1; white-space:nowrap; }
+    .sub-tab-btn + .sub-tab-btn { border-left:1px solid var(--border2); }
+    .sub-tab-btn.active { color:var(--teal); background:rgba(42,206,190,0.07); }
+    .sub-tab-btn:hover:not(.active) { color:var(--text); }
+    .header-right { display:flex; align-items:center; gap:1.5rem; flex-shrink:0; }
+    .portfolio-back { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.2s; white-space:nowrap; }
+    .portfolio-back:hover { color:var(--teal); }
+    .header-brand { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.08em; color:var(--white); white-space:nowrap; }
+    .header-brand span { color:var(--teal); }
+
+    .tab-content { display:none; padding-top:var(--h); min-height:100vh; position:relative; z-index:1; }
+    .tab-content.active { display:block; }
+
+    /* ── OVERVIEW ── */
+    .overview-inner { padding:5rem 6vw 6rem; max-width:1200px; }
+    .project-eyebrow { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--teal); margin-bottom:1rem; display:flex; align-items:center; gap:0.7rem; }
+    .project-eyebrow::before { content:''; display:inline-block; width:20px; height:1px; background:var(--teal); }
+    .project-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3.5rem,9vw,7.5rem); line-height:0.88; color:var(--white); margin-bottom:2.5rem; }
+    .overview-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:4rem; align-items:start; }
+    .overview-desc { font-size:0.95rem; line-height:1.8; color:var(--text); margin-bottom:1.2rem; }
+    .spec-callout { border:1px solid var(--border2); background:var(--panel); padding:1.5rem 2rem; margin:2rem 0; position:relative; }
+    .spec-callout::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--teal); }
+    .spec-row { display:flex; justify-content:space-between; align-items:baseline; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
+    .spec-row:last-child { border-bottom:none; }
+    .spec-label { color:var(--muted); font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; }
+    .spec-val { color:var(--white); font-family:'DM Mono',monospace; font-size:0.82rem; }
+    .spec-val.hi { color:var(--teal); }
+    .stack-title { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); margin-bottom:0.8rem; }
+    .tag-cloud { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:2.5rem; }
+    .tag { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; padding:0.3rem 0.7rem; border:1px solid var(--border2); color:var(--muted); transition:border-color 0.2s, color 0.2s; }
+    .tag.hi { border-color:rgba(42,206,190,0.4); color:var(--teal); background:rgba(42,206,190,0.06); }
+    .btn-row { display:flex; gap:0.8rem; flex-wrap:wrap; }
+    .btn { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; text-decoration:none; padding:0.7rem 1.4rem; display:inline-flex; align-items:center; gap:0.5rem; transition:all 0.2s; }
+    .btn-primary { background:var(--teal); color:var(--bg); }
+    .btn-primary:hover { background:#48ddd0; }
+    .btn-secondary { border:1px solid var(--border2); color:var(--muted); }
+    .btn-secondary:hover { border-color:rgba(42,206,190,0.5); color:var(--teal); }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:2rem; }
+    .stat-cell { background:var(--panel); padding:1.5rem; transition:background 0.2s; }
+    .stat-cell:hover { background:var(--panel2); }
+    .stat-val { font-family:'Bebas Neue',sans-serif; font-size:3rem; line-height:1; color:var(--teal); margin-bottom:0.3rem; }
+    .stat-label { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); line-height:1.4; }
+    .flow-diagram { border:1px solid var(--border); background:var(--panel); padding:1.5rem; margin-top:1rem; }
+    .flow-title { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; }
+    .flow-nodes { display:flex; align-items:center; flex-wrap:wrap; gap:0.3rem; }
+    .flow-node { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.05em; padding:0.45rem 0.8rem; border:1px solid var(--border2); color:var(--text); background:var(--panel2); white-space:nowrap; }
+    .flow-arrow { color:var(--teal); font-size:0.7rem; }
+
+    /* ── ARCHITECTURE TAB ── */
+    .arch-inner { padding:4rem 6vw 6rem; }
+    .arch-eyebrow { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--teal); margin-bottom:0.8rem; display:flex; align-items:center; gap:0.7rem; }
+    .arch-eyebrow::before { content:''; display:inline-block; width:20px; height:1px; background:var(--teal); }
+    .arch-heading { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,5vw,4rem); color:var(--white); line-height:1; margin-bottom:0.8rem; }
+    .arch-sub { font-size:0.85rem; color:var(--muted); line-height:1.7; margin-bottom:3rem; max-width:600px; }
+    .doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); }
+    .doc-card { background:var(--panel); padding:2rem 2.2rem; text-decoration:none; display:flex; flex-direction:column; position:relative; overflow:hidden; transition:background 0.25s; }
+    .doc-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--teal); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
+    .doc-card:hover { background:var(--panel2); }
+    .doc-card:hover::before { transform:scaleX(1); }
+    .doc-num { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; color:var(--border2); line-height:1; margin-bottom:1rem; transition:color 0.2s; }
+    .doc-card:hover .doc-num { color:rgba(42,206,190,0.3); }
+    .doc-title { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; color:var(--white); line-height:1.05; margin-bottom:0.6rem; }
+    .doc-desc { font-size:0.8rem; line-height:1.65; color:var(--muted); flex:1; margin-bottom:1.5rem; }
+    .doc-open { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--teal); display:flex; align-items:center; gap:0.4rem; }
+    .doc-open-arrow { display:inline-block; transition:transform 0.2s; }
+    .doc-card:hover .doc-open-arrow { transform:translateX(4px); }
+
+    /* ── LIVE DEMO TAB ── */
+    #tab-demo { background:#0a0a0a; }
+    .demo-wrap { padding:2rem 4vw 4rem; max-width:1380px; margin:0 auto; }
+
+    .demo-banner { display:flex; align-items:center; gap:1rem; padding:0.6rem 1.2rem; background:rgba(42,206,190,0.06); border:1px solid rgba(42,206,190,0.2); border-left:3px solid var(--teal); margin-bottom:2rem; }
+    .demo-dot { width:6px; height:6px; border-radius:50%; background:var(--teal); animation:dpulse 2s infinite; flex-shrink:0; }
+    @keyframes dpulse { 0%,100%{box-shadow:0 0 0 0 rgba(42,206,190,0.5);} 50%{box-shadow:0 0 0 5px rgba(42,206,190,0);} }
+    .demo-text { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal); }
+    .demo-text span { color:var(--muted); margin-left:0.8rem; font-size:0.58rem; }
+
+    /* Dashboard shell */
+    .dash-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    .dash-brand { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:var(--white); }
+    .dash-brand span { color:var(--teal); }
+    .dash-status { display:flex; align-items:center; gap:1.2rem; }
+    .status-item { display:flex; align-items:center; gap:0.4rem; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .sdot { width:7px; height:7px; border-radius:50%; }
+    .sdot.ok  { background:var(--green); box-shadow:0 0 6px var(--green); }
+    .sdot.warn { background:var(--yellow); box-shadow:0 0 6px var(--yellow); animation:wblink 1s infinite; }
+    .sdot.err { background:var(--red); box-shadow:0 0 6px var(--red); }
+    @keyframes wblink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    /* Stats row */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.5rem; }
+    .s-card { background:var(--panel); padding:1.4rem 1.6rem; position:relative; overflow:hidden; }
+    .s-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:transparent; transition:background 0.4s; }
+    .s-card.flash::after { background:var(--teal); }
+    .s-label { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem; }
+    .s-label::before { content:''; display:inline-block; width:10px; height:1px; background:currentColor; }
+    .s-val { font-family:'Bebas Neue',sans-serif; font-size:2.6rem; line-height:1; color:var(--white); transition:color 0.4s; }
+    .s-val.teal { color:var(--teal); }
+    .s-val.red  { color:var(--red); animation:alert-glow 1s infinite; }
+    .s-val.grn  { color:var(--green); }
+    @keyframes alert-glow { 0%,100%{color:var(--red);} 50%{color:#ff8a8a;} }
+    .s-sub { font-size:0.7rem; color:var(--muted); margin-top:0.2rem; }
+
+    /* Main grid */
+    .dash-grid { display:grid; grid-template-columns:1fr 360px; gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.5rem; }
+    .d-pane { background:var(--panel); padding:1.4rem; }
+
+    .pane-tag { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--teal); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.4rem; }
+    .pane-tag::before { content:''; display:inline-block; width:14px; height:1px; background:var(--teal); }
+    .pane-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--white); margin-bottom:1rem; }
+
+    /* Camera grid */
+    .cam-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .cam-card { background:var(--panel2); border:1px solid var(--border2); border-radius:6px; overflow:hidden; }
+    .cam-card.alert-cam { border-color:rgba(224,85,85,0.5); }
+    .cam-head { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#0d0f0f; border-bottom:1px solid var(--border); }
+    .cam-name { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+    .cam-badge { font-family:'DM Mono',monospace; font-size:0.54rem; padding:2px 7px; border-radius:2px; }
+    .cam-badge.live   { background:rgba(52,211,153,0.12); color:var(--green); }
+    .cam-badge.alert  { background:rgba(224,85,85,0.15); color:var(--red); animation:badge-pulse 1.2s infinite; }
+    @keyframes badge-pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+    .cam-view { position:relative; aspect-ratio:16/9; background:#080a0d; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .cam-canvas { width:100%; height:100%; }
+    .cam-overlay { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:8px 10px; background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 50%); }
+    .cam-ts { font-family:'DM Mono',monospace; font-size:0.58rem; color:rgba(255,255,255,0.5); }
+
+    /* Alert panel */
+    .alert-box { background:rgba(224,85,85,0.08); border:1px solid rgba(224,85,85,0.35); border-radius:6px; padding:12px 14px; margin-bottom:10px; }
+    .alert-box.hidden { display:none; }
+    .alert-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .alert-icon { font-size:16px; }
+    .alert-title { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--red); letter-spacing:0.08em; text-transform:uppercase; }
+    .alert-body { font-size:0.78rem; color:rgba(224,85,85,0.8); line-height:1.5; }
+    .alert-meta { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); margin-top:6px; }
+
+    /* Attempt counter */
+    .attempt-track { margin-bottom:12px; }
+    .attempt-label { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between; }
+    .attempt-bar-bg { height:4px; background:var(--border); border-radius:2px; }
+    .attempt-bar-fill { height:4px; border-radius:2px; transition:width 0.6s ease, background 0.4s; }
+
+    /* Event feed */
+    .event-feed { height:220px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+    .event-row { display:flex; align-items:center; gap:9px; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,0.03); animation:efade 0.4s ease; }
+    @keyframes efade { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+    .e-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .e-dot.ok   { background:rgba(52,211,153,0.6); }
+    .e-dot.fail { background:var(--red); box-shadow:0 0 4px var(--red); }
+    .e-body { flex:1; min-width:0; }
+    .e-label { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .e-time  { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); flex-shrink:0; }
+
+    /* SMS notification popup */
+    #sms-popup { position:fixed; bottom:2rem; right:2rem; z-index:999; max-width:320px; background:var(--panel); border:1px solid rgba(224,85,85,0.5); border-left:3px solid var(--red); padding:1rem 1.2rem; transition:opacity 0.4s, transform 0.4s; opacity:0; transform:translateY(8px); pointer-events:none; }
+    #sms-popup.show { opacity:1; transform:translateY(0); pointer-events:auto; }
+    .sms-label { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:0.4rem; }
+    .sms-body  { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--text2); line-height:1.55; }
+    .sms-close { position:absolute; top:8px; right:10px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; }
+
+    @media(max-width:1100px){ .stat-row { grid-template-columns:1fr 1fr; } .dash-grid { grid-template-columns:1fr; } }
+    @media(max-width:900px){ .overview-grid { grid-template-columns:1fr; gap:2.5rem; } }
+    @media(max-width:600px){ .stat-row { grid-template-columns:1fr 1fr; } .doc-grid { grid-template-columns:1fr; } .cam-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<header id="site-header">
+  <div style="display:flex;align-items:center;gap:0;flex-shrink:0;">
+    <nav class="sub-tab-nav">
+      <button class="sub-tab-btn active" onclick="switchTab('overview')">Overview</button>
+      <button class="sub-tab-btn" onclick="switchTab('demo')">Live Demo</button>
+      <button class="sub-tab-btn" onclick="switchTab('arch')">Architecture</button>
+    </nav>
+  </div>
+  <div class="header-right">
+    <div class="header-brand">cloud-gate-<span>monitor</span></div>
+    <a class="portfolio-back" href="https://bhaviksapru.github.io" target="_top">← Portfolio</a>
+  </div>
+</header>
+
+<!-- ── OVERVIEW ── -->
+<section id="tab-overview" class="tab-content active">
+  <div class="overview-inner">
+    <div class="project-eyebrow">Home Security · AWS IoT · Raspberry Pi</div>
+    <h1 class="project-title">Cloud<br/>Gate<br/>Monitor</h1>
+    <div class="overview-grid">
+      <div>
+        <p class="overview-desc">A self-hosted home CCTV and gate monitoring system built around a Raspberry Pi, two TAPO C100 cameras, and a TTLock smart gate — all piped through AWS at under $3/month for two cameras.</p>
+        <p class="overview-desc" style="color:var(--muted);font-size:0.88rem;">The Pi streams RTSP through ffmpeg, writing 10-second HLS segments that upload to S3 for live viewing, plus 5-minute MP4 clips retained for 7 days. CloudFront serves the live HLS, clips, and React SPA. Gate events from TTLock's webhook are stored in DynamoDB and trigger SMS via SNS when failed attempts exceed a configurable threshold. The Pi uses an IoT X.509 certificate — no IAM keys on device.</p>
+        <div class="spec-callout">
+          <div class="spec-row"><span class="spec-label">Stream</span><span class="spec-val">HLS · 10s segs · live + 7-day clips</span></div>
+          <div class="spec-row"><span class="spec-label">Gate alerts</span><span class="spec-val">TTLock → DDB → SMS on N fails</span></div>
+          <div class="spec-row"><span class="spec-label">Auth</span><span class="spec-val">Cognito TOTP MFA · PKCE · invite-only</span></div>
+          <div class="spec-row"><span class="spec-label">Pi → AWS</span><span class="spec-val hi">IoT X.509 cert · no IAM keys</span></div>
+          <div class="spec-row"><span class="spec-label">Cost</span><span class="spec-val hi">~$1.50/cam · ~$2.80 for 2 cameras</span></div>
+        </div>
+        <div class="stack-title">Tech stack</div>
+        <div class="tag-cloud">
+          <span class="tag hi">Raspberry Pi</span><span class="tag hi">TAPO C100</span><span class="tag hi">TTLock</span><span class="tag hi">AWS IoT Core</span>
+          <span class="tag">S3</span><span class="tag">CloudFront</span><span class="tag">Lambda × 3</span><span class="tag">API Gateway</span>
+          <span class="tag">DynamoDB</span><span class="tag">Cognito</span><span class="tag">SNS</span><span class="tag">SSM</span>
+          <span class="tag">ffmpeg</span><span class="tag">hls.js</span><span class="tag">React · Vite</span><span class="tag">AWS SAM</span>
+        </div>
+        <div class="btn-row">
+          <a href="https://github.com/bhaviksapru/cloud-gate-monitor" target="_blank" class="btn btn-primary">GitHub →</a>
+          <button class="btn btn-secondary" onclick="switchTab('demo')" style="cursor:pointer;">Live Demo →</button>
+        </div>
+      </div>
+      <div>
+        <div class="stat-grid">
+          <div class="stat-cell"><div class="stat-val">~$1.50</div><div class="stat-label">Per camera<br/>per month</div></div>
+          <div class="stat-cell"><div class="stat-val">7d</div><div class="stat-label">Clip retention<br/>S3 lifecycle</div></div>
+          <div class="stat-cell"><div class="stat-val">3</div><div class="stat-label">Lambda functions<br/>clip · events · webhook</div></div>
+          <div class="stat-cell"><div class="stat-val">10s</div><div class="stat-label">HLS segment<br/>live latency</div></div>
+        </div>
+        <div class="flow-diagram">
+          <div class="flow-title">Video path</div>
+          <div class="flow-nodes"><div class="flow-node">TAPO RTSP</div><div class="flow-arrow">→</div><div class="flow-node">ffmpeg + Pi</div><div class="flow-arrow">→</div><div class="flow-node">S3 HLS</div><div class="flow-arrow">→</div><div class="flow-node">CloudFront</div><div class="flow-arrow">→</div><div class="flow-node">hls.js</div></div>
+        </div>
+        <div class="flow-diagram">
+          <div class="flow-title">Gate alert path</div>
+          <div class="flow-nodes"><div class="flow-node">TTLock Gate</div><div class="flow-arrow">→</div><div class="flow-node">Webhook λ</div><div class="flow-arrow">→</div><div class="flow-node">DynamoDB</div><div class="flow-arrow">→</div><div class="flow-node">SNS SMS</div></div>
+        </div>
+        <div class="flow-diagram">
+          <div class="flow-title">IoT credential flow</div>
+          <div class="flow-nodes"><div class="flow-node">X.509 Cert</div><div class="flow-arrow">→</div><div class="flow-node">IoT Core</div><div class="flow-arrow">→</div><div class="flow-node">Temp Creds</div><div class="flow-arrow">→</div><div class="flow-node">S3 Write</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── LIVE DEMO TAB ── -->
+<section id="tab-demo" class="tab-content">
+  <div class="demo-wrap">
+
+    <div class="demo-banner">
+      <div class="demo-dot"></div>
+      <div class="demo-text">Live Demo <span>· Simulated data — tap the gate icon to simulate a failed entry attempt and watch the alert trigger</span></div>
+    </div>
+
+    <!-- Dashboard top bar -->
+    <div class="dash-topbar">
+      <div class="dash-brand">cloud-gate-<span>monitor</span></div>
+      <div class="dash-status">
+        <div class="status-item"><div class="sdot ok" id="d-iot-dot"></div><span id="d-iot-label">IoT Connected</span></div>
+        <div class="status-item"><div class="sdot ok" id="d-s3-dot"></div><span>S3 Streaming</span></div>
+        <div class="status-item" style="cursor:pointer;" onclick="Demo.simulateFail()" title="Simulate failed gate attempt">
+          <span style="font-size:1.1rem;">🔒</span><span style="color:var(--teal);">Simulate Fail</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="s-card" id="d-card-total">
+        <div class="s-label">Events Today</div>
+        <div class="s-val teal" id="d-total">0</div>
+        <div class="s-sub" id="d-total-sub">gate events</div>
+      </div>
+      <div class="s-card" id="d-card-fail">
+        <div class="s-label">Failed Attempts</div>
+        <div class="s-val" id="d-fail" style="color:var(--green);">0</div>
+        <div class="s-sub" id="d-fail-sub">last: —</div>
+      </div>
+      <div class="s-card" id="d-card-window">
+        <div class="s-label">Window Count</div>
+        <div class="s-val teal" id="d-window">0</div>
+        <div class="s-sub">of <span id="d-threshold">3</span> threshold</div>
+      </div>
+      <div class="s-card" id="d-card-cams">
+        <div class="s-label">Cameras Live</div>
+        <div class="s-val teal">2</div>
+        <div class="s-sub">front-gate · backyard</div>
+      </div>
+    </div>
+
+    <!-- Main grid: cameras left, alert feed right -->
+    <div class="dash-grid">
+
+      <!-- Camera feeds -->
+      <div class="d-pane">
+        <div class="pane-tag">Video</div>
+        <div class="pane-title">Live Streams</div>
+        <div class="cam-grid">
+          <div class="cam-card" id="cam-front">
+            <div class="cam-head">
+              <span class="cam-name">front-gate</span>
+              <span class="cam-badge live" id="cam-front-badge">● LIVE</span>
+            </div>
+            <div class="cam-view">
+              <canvas class="cam-canvas" id="canvas-front" width="320" height="180"></canvas>
+              <div class="cam-overlay">
+                <div class="cam-ts" id="cam-front-ts">00:00:00</div>
+              </div>
+            </div>
+          </div>
+          <div class="cam-card" id="cam-back">
+            <div class="cam-head">
+              <span class="cam-name">backyard</span>
+              <span class="cam-badge live">● LIVE</span>
+            </div>
+            <div class="cam-view">
+              <canvas class="cam-canvas" id="canvas-back" width="320" height="180"></canvas>
+              <div class="cam-overlay">
+                <div class="cam-ts" id="cam-back-ts">00:00:00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert panel + event feed -->
+      <div class="d-pane" style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <div class="pane-tag">Security</div>
+          <div class="pane-title">Gate Alerts</div>
+
+          <!-- Alert box (hidden until threshold hit) -->
+          <div class="alert-box hidden" id="d-alert-box">
+            <div class="alert-header">
+              <span class="alert-icon">🚨</span>
+              <span class="alert-title">Threshold Exceeded</span>
+            </div>
+            <div class="alert-body" id="d-alert-body">Lock #12345: 3/3 failed attempts in 60-min window.</div>
+            <div class="alert-meta" id="d-alert-meta">SNS SMS dispatched · Time: —</div>
+          </div>
+
+          <!-- Attempt progress bar -->
+          <div class="attempt-track">
+            <div class="attempt-label">
+              <span>Failed attempts (rolling window)</span>
+              <span id="d-attempt-fraction">0 / 3</span>
+            </div>
+            <div class="attempt-bar-bg">
+              <div class="attempt-bar-fill" id="d-attempt-bar" style="width:0%;background:var(--green);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-height:0;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Live Event Feed</div>
+          <div class="event-feed" id="d-feed"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Threshold control -->
+    <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Threshold (SSM /cgm/threshold):</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="Demo.setThreshold(1)" id="t1" style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border2)'">1</button>
+        <button onclick="Demo.setThreshold(3)" id="t3" style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--teal);background:rgba(42,206,190,.07);color:var(--teal);cursor:pointer;">3</button>
+        <button onclick="Demo.setThreshold(5)" id="t5" style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border2)'">5</button>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);">Changes take effect on next event — no Lambda redeploy needed</div>
+      <button onclick="Demo.reset()" style="margin-left:auto;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:.1em;padding:4px 14px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='var(--muted)'">↺ Reset</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── ARCHITECTURE ── -->
+<section id="tab-arch" class="tab-content">
+  <div class="arch-inner">
+    <div class="arch-eyebrow">Technical Documentation</div>
+    <h2 class="arch-heading">Architecture Docs</h2>
+    <p class="arch-sub">Three documents covering the AWS service topology, full system interaction sequence, and detailed cost analysis.</p>
+    <div class="doc-grid">
+      <a class="doc-card" href="architecture/aws-reference-architecture.html" target="_blank">
+        <div class="doc-num">01</div>
+        <div class="doc-title">AWS Reference Architecture</div>
+        <p class="doc-desc">Full service map — Pi, cameras, TTLock, IoT Core credential flow, S3, CloudFront, Lambda × 3, DynamoDB, SNS, Cognito, and API Gateway. Official AWS diagram style.</p>
+        <div class="doc-open">Open document <span class="doc-open-arrow">→</span></div>
+      </a>
+      <a class="doc-card" href="architecture/sequence-diagram.html" target="_blank">
+        <div class="doc-num">02</div>
+        <div class="doc-title">Sequence Diagram</div>
+        <p class="doc-desc">Three core flows: camera stream (IoT creds + HLS upload), TTLock gate alert (HMAC verify → DDB → SNS threshold), and dashboard (Cognito PKCE + TOTP → live HLS + clip browsing + event history).</p>
+        <div class="doc-open">Open document <span class="doc-open-arrow">→</span></div>
+      </a>
+      <a class="doc-card" href="architecture/financial-analysis.html" target="_blank">
+        <div class="doc-num">03</div>
+        <div class="doc-title">Financial Analysis</div>
+        <p class="doc-desc">Service-by-service cost breakdown, comparison against Tapo Care and local NVR, scaling from 1–8 cameras, and optimisation options.</p>
+        <div class="doc-open">Open document <span class="doc-open-arrow">→</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SMS Popup -->
+<div id="sms-popup">
+  <button class="sms-close" onclick="document.getElementById('sms-popup').classList.remove('show')">✕</button>
+  <div class="sms-label">📱 SNS SMS Dispatched</div>
+  <div class="sms-body" id="sms-body">GATE ALERT\nLock #12345: 3/3 failed attempts.\nTime: 14:22 ET\nView: https://cgm.cloudfront.net/?view=events</div>
+</div>
+
+<script>
+  // ── TAB SWITCHING ──────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('.sub-tab-btn').forEach(b => {
+      if (b.getAttribute('onclick').includes("'" + tab + "'")) b.classList.add('active');
+    });
+    if (tab === 'demo') Demo.init();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // DEMO ENGINE
+  // ══════════════════════════════════════════════════════════════
+  const Demo = (() => {
+    let initialized = false;
+    let threshold   = 3;
+    let failCount   = 0;   // within rolling window
+    let totalFails  = 0;
+    let totalEvents = 0;
+    let alertFired  = false;
+    let autoTimer   = null;
+    let frameTimers = [];
+
+    const RECORD_LABELS = {
+      1:'Bluetooth unlock', 2:'App lock', 3:'Auto lock', 4:'Auto unlock',
+      6:'Keyboard unlock', 7:'IC card unlock', 12:'Remote unlock',
+      47:'Keyboard failed', 55:'Face recognition failed'
+    };
+
+    function el(id) { return document.getElementById(id); }
+
+    function simTime() {
+      const d = new Date();
+      return d.toLocaleTimeString('en-CA', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'America/Toronto' });
+    }
+
+    function addEvent(label, success) {
+      totalEvents++;
+      el('d-total').textContent = totalEvents;
+      el('d-total-sub').textContent = 'gate events today';
+      flashCard('d-card-total');
+
+      const feed = el('d-feed');
+      const row  = document.createElement('div');
+      row.className = 'event-row';
+      row.innerHTML = `
+        <div class="e-dot ${success ? 'ok' : 'fail'}"></div>
+        <div class="e-body"><div class="e-label">${label}</div></div>
+        <div class="e-time">${simTime()}</div>`;
+      feed.insertBefore(row, feed.firstChild);
+      while (feed.children.length > 20) feed.removeChild(feed.lastChild);
+    }
+
+    function updateFailUI() {
+      const pct = Math.min(100, (failCount / threshold) * 100);
+      const bar = el('d-attempt-bar');
+      bar.style.width = pct + '%';
+      bar.style.background = pct >= 100 ? 'var(--red)' : pct >= 60 ? 'var(--yellow)' : 'var(--green)';
+      el('d-attempt-fraction').textContent = failCount + ' / ' + threshold;
+      el('d-window').textContent = failCount;
+      const failEl = el('d-fail');
+      failEl.textContent = totalFails;
+      failEl.style.color = totalFails > 0 ? 'var(--red)' : 'var(--green)';
+      el('d-fail-sub').textContent = 'last: ' + simTime();
+      flashCard('d-card-fail');
+      flashCard('d-card-window');
+    }
+
+    function flashCard(id) {
+      const c = el(id); if (!c) return;
+      c.classList.add('flash');
+      setTimeout(() => c.classList.remove('flash'), 700);
+    }
+
+    function fireAlert() {
+      const box = el('d-alert-box');
+      box.classList.remove('hidden');
+      el('d-alert-body').textContent = `Lock #12345: ${failCount}/${threshold} failed attempts in 60-min window.`;
+      el('d-alert-meta').textContent = `SNS SMS dispatched · Time: ${simTime()} ET`;
+
+      // Camera alert highlight
+      const front = el('cam-front');
+      const badge = el('cam-front-badge');
+      front.classList.add('alert-cam');
+      badge.className = 'cam-badge alert';
+      badge.textContent = '⚠ ALERT';
+
+      // SMS popup
+      el('sms-body').textContent =
+        `GATE ALERT\nLock #12345: ${failCount}/${threshold} failed attempt${failCount > 1 ? 's' : ''}.\nTime: ${simTime()} ET\nView: https://cgm.cloudfront.net/?view=events`;
+      const popup = el('sms-popup');
+      popup.classList.add('show');
+      setTimeout(() => popup.classList.remove('show'), 7000);
+
+      // Fail val color
+      el('d-fail').className = 's-val red';
+    }
+
+    function clearAlert() {
+      const box = el('d-alert-box');
+      if (box) box.classList.add('hidden');
+      const front = el('cam-front');
+      const badge = el('cam-front-badge');
+      if (front) front.classList.remove('alert-cam');
+      if (badge) { badge.className = 'cam-badge live'; badge.textContent = '● LIVE'; }
+    }
+
+    // ── Canvas camera simulations ──────────────────────────────
+    function drawCamera(canvasId, opts) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      let t = 0;
+
+      function frame() {
+        t++;
+        // Background: dark night exterior
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, opts.sky || '#0a0c10');
+        grad.addColorStop(1, '#050608');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Stars (static seed)
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        for (let i = 0; i < 30; i++) {
+          const sx = ((i * 137 + 17) % W);
+          const sy = ((i * 89 + 23) % (H * 0.45));
+          const flicker = 0.4 + 0.6 * Math.sin(t * 0.05 + i);
+          ctx.globalAlpha = flicker;
+          ctx.fillRect(sx, sy, 1, 1);
+        }
+        ctx.globalAlpha = 1;
+
+        // Ground / path
+        ctx.fillStyle = '#111318';
+        ctx.fillRect(0, H * 0.6, W, H);
+
+        // Gate (front-gate only)
+        if (opts.showGate) {
+          // Gate posts
+          ctx.fillStyle = '#1c2030';
+          ctx.fillRect(W * 0.35, H * 0.28, 10, H * 0.38);
+          ctx.fillRect(W * 0.62, H * 0.28, 10, H * 0.38);
+          // Gate bars
+          ctx.strokeStyle = opts.alertMode ? 'rgba(224,85,85,0.7)' : '#2a2f42';
+          ctx.lineWidth = 2;
+          for (let b = 0; b < 5; b++) {
+            const bx = W * 0.35 + 10 + b * (W * 0.27 / 5) + 4;
+            ctx.beginPath();
+            ctx.moveTo(bx, H * 0.28);
+            ctx.lineTo(bx, H * 0.62);
+            ctx.stroke();
+          }
+          // Horizontal bars
+          ctx.beginPath(); ctx.moveTo(W * 0.35, H * 0.34); ctx.lineTo(W * 0.72, H * 0.34); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(W * 0.35, H * 0.54); ctx.lineTo(W * 0.72, H * 0.54); ctx.stroke();
+
+          // Lock indicator
+          if (opts.alertMode) {
+            ctx.fillStyle = `rgba(224,85,85,${0.6 + 0.4 * Math.sin(t * 0.15)})`;
+            ctx.beginPath();
+            ctx.arc(W * 0.485, H * 0.44, 6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // IR infrared grid (night vision aesthetic)
+        ctx.strokeStyle = 'rgba(50,180,100,0.04)';
+        ctx.lineWidth = 0.5;
+        for (let g = 0; g < 8; g++) {
+          const gy = g * (H / 8);
+          ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        }
+        for (let g = 0; g < 12; g++) {
+          const gx = g * (W / 12);
+          ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+        }
+
+        // IR vignette
+        const vig = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.75);
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, W, H);
+
+        // NV tint (green IR)
+        ctx.fillStyle = 'rgba(20,80,30,0.08)';
+        ctx.fillRect(0, 0, W, H);
+
+        // HLS scan line
+        const scanY = (t * 1.2) % H;
+        ctx.fillStyle = 'rgba(100,255,150,0.03)';
+        ctx.fillRect(0, scanY, W, 2);
+      }
+
+      const id = setInterval(frame, 80);
+      frameTimers.push(id);
+      return id;
+    }
+
+    // ── Public API ─────────────────────────────────────────────
+    function init() {
+      if (initialized) return;
+      initialized = true;
+
+      // Seed some initial successful events
+      const seed = [
+        { label:'Remote unlock', success:true },
+        { label:'App lock', success:true },
+        { label:'Bluetooth unlock', success:true },
+        { label:'Remote unlock', success:true },
+      ];
+      seed.forEach(e => addEvent(e.label, e.success));
+
+      // Start canvases
+      drawCamera('canvas-front', { showGate:true,  sky:'#080b12' });
+      drawCamera('canvas-back',  { showGate:false, sky:'#09090e' });
+
+      // Auto-inject random successes every 18s
+      autoTimer = setInterval(() => {
+        const labels = ['Remote unlock','App lock','Auto lock','Bluetooth unlock','Remote unlock'];
+        addEvent(labels[Math.floor(Math.random() * labels.length)], true);
+      }, 18000);
+    }
+
+    function simulateFail() {
+      if (!initialized) init();
+
+      const failLabels = ['Keyboard failed', 'Face recognition failed', 'Keyboard failed'];
+      const label = failLabels[Math.floor(Math.random() * failLabels.length)];
+
+      totalFails++;
+      failCount++;
+      addEvent(label, false);
+      updateFailUI();
+
+      // Redraw front cam in alert mode
+      const canvas = document.getElementById('canvas-front');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        // Flash red overlay
+        ctx.fillStyle = 'rgba(224,85,85,0.3)';
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      if (failCount >= threshold && !alertFired) {
+        alertFired = true;
+        setTimeout(fireAlert, 300);
+      }
+    }
+
+    function setThreshold(n) {
+      threshold = n;
+      el('d-threshold').textContent = n;
+      el('d-attempt-fraction').textContent = failCount + ' / ' + n;
+      // Update button styles
+      [1, 3, 5].forEach(v => {
+        const btn = el('t' + v);
+        if (!btn) return;
+        if (v === n) {
+          btn.style.cssText = 'font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--teal);background:rgba(42,206,190,.07);color:var(--teal);cursor:pointer;';
+        } else {
+          btn.style.cssText = 'font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;';
+        }
+      });
+      // Re-check if already should have alerted
+      if (failCount >= threshold && !alertFired) {
+        alertFired = true;
+        setTimeout(fireAlert, 100);
+      }
+    }
+
+    function reset() {
+      failCount   = 0;
+      totalFails  = 0;
+      totalEvents = 0;
+      alertFired  = false;
+
+      el('d-total').textContent  = '0';
+      el('d-fail').textContent   = '0';
+      el('d-fail').style.color   = 'var(--green)';
+      el('d-fail').className     = 's-val';
+      el('d-window').textContent = '0';
+      el('d-attempt-fraction').textContent = '0 / ' + threshold;
+      el('d-attempt-bar').style.width = '0%';
+      el('d-attempt-bar').style.background = 'var(--green)';
+      el('d-fail-sub').textContent = 'last: —';
+      el('d-feed').innerHTML = '';
+      clearAlert();
+      el('sms-popup').classList.remove('show');
+    }
+
+    return { init, simulateFail, setThreshold, reset };
+  })();
+
+  // Timestamp updater
+  setInterval(() => {
+    const t = new Date().toLocaleTimeString('en-CA', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'America/Toronto' });
+    const f = document.getElementById('cam-front-ts');
+    const b = document.getElementById('cam-back-ts');
+    if (f) f.textContent = t;
+    if (b) b.textContent = t;
+  }, 1000);
+</script>
+</body>
 </html>
