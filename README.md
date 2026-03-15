@@ -113,9 +113,9 @@ REGION=ca-central-1
 
 # Create IoT certificate
 CERT=$(aws iot create-keys-and-certificate --set-as-active --region $REGION)
-CERT_ARN=$(echo $CERT | python3 -c "import sys,json; print(json.load(sys.stdin)['certificateArn'])")
-echo $CERT | python3 -c "import sys,json; print(json.load(sys.stdin)['certificatePem'])"        > device.crt
-echo $CERT | python3 -c "import sys,json; print(json.load(sys.stdin)['keyPair']['PrivateKey'])"  > device.key
+CERT_ARN=$(echo "$CERT" | python3 -c "import sys,json; print(json.load(sys.stdin)['certificateArn'])")
+echo "$CERT" | python3 -c "import sys,json; print(json.load(sys.stdin)['certificatePem'])"       > device.crt
+echo "$CERT" | python3 -c "import sys,json; print(json.load(sys.stdin)['keyPair']['PrivateKey'])" > device.key
 curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem -o AmazonRootCA1.pem
 
 # Attach to Thing and Policy
@@ -188,9 +188,9 @@ mkdir -p "$HLS_DIR" "$CLIP_DIR"
 get_creds() {
   C=$(curl -fsSL --cert "$CERT_PATH" --key "$KEY_PATH" --cacert "$CA_PATH" \
     "https://$IOT_CRED_ENDPOINT/role-aliases/$IOT_ROLE_ALIAS/credentials")
-  export AWS_ACCESS_KEY_ID=$(echo $C     | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['accessKeyId'])")
-  export AWS_SECRET_ACCESS_KEY=$(echo $C | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['secretAccessKey'])")
-  export AWS_SESSION_TOKEN=$(echo $C     | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['sessionToken'])")
+  export AWS_ACCESS_KEY_ID=$(echo "$C"   | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['accessKeyId'])")
+  export AWS_SECRET_ACCESS_KEY=$(echo "$C" | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['secretAccessKey'])")
+  export AWS_SESSION_TOKEN=$(echo "$C"   | python3 -c "import sys,json; print(json.load(sys.stdin)['credentials']['sessionToken'])")
 }
 
 # Upload HLS segments as they are written (for live view)
@@ -246,7 +246,11 @@ User=cgm
 EnvironmentFile=/etc/cgm/cgm.env
 ExecStartPre=/bin/bash -c 'mkdir -p /tmp/cgm/live/%i /tmp/cgm/clips/%i'
 ExecStart=/bin/bash -c 'source /etc/cgm/cgm.env; \
-  IDX=0; [ "${CAM1_NAME:-}" = "%i" ] && IDX=1; \
+  IDX=0; \
+  for i in 0 1 2 3 4; do \
+    eval "_N=\${CAM${i}_NAME:-}"; \
+    [ "$_N" = "%i" ] && IDX=$i && break; \
+  done; \
   eval N=\$CAM${IDX}_NAME I=\$CAM${IDX}_IP U=\$CAM${IDX}_USER P=\$CAM${IDX}_PASS; \
   exec /opt/cgm/stream.sh "$N" "$I" "$U" "$P"'
 Restart=always

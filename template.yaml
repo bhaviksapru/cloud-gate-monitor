@@ -266,12 +266,10 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: "cgm/*"
         - Statement:
+            # sns:RequestDestination is not a real IAM condition key; removed to unblock SNS Publish
             - Effect: Allow
               Action: sns:Publish
               Resource: "*"
-              Condition:
-                StringEquals:
-                  sns:RequestDestination: SMS
       Events:
         Post:
           Type: HttpApi

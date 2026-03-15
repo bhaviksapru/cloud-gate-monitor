@@ -83,7 +83,13 @@ async function storeEvent(event: TTLockEvent, nowMs: number): Promise<void> {
 }
 
 async function checkCounter(lockId: string, nowMs: number, windowMinutes: number, threshold: number): Promise<{ count: number; shouldAlert: boolean }> {
-  const windowStart = nowMs - windowMinutes * 60 * 1000;
+  // FIX: windowStart now stores the timestamp of the first event in the current
+  // window (i.e. nowMs at that point), NOT (nowMs - windowDuration).
+  // The old code set windowStart = nowMs - windowDuration on every call, so
+  // existingStart was always less than the newly computed windowStart, causing
+  // the "still active" check to always fail and the counter to reset every event.
+  // That made threshold > 1 impossible to reach.
+  const windowDurationMs = windowMinutes * 60 * 1000;
 
   const { Item } = await ddb.send(new GetItemCommand({
     TableName: TABLE,
@@ -91,10 +97,16 @@ async function checkCounter(lockId: string, nowMs: number, windowMinutes: number
   }));
 
   let count = 1;
+  let newWindowStart = nowMs;
   if (Item) {
-    const existingStart = parseInt(Item.windowStart?.N ?? "0");
-    const existingCount = parseInt(Item.count?.N ?? "0");
-    count = existingStart >= windowStart ? existingCount + 1 : 1;
+    const existingWindowStart = parseInt(Item.windowStart?.N ?? "0");
+    const existingCount       = parseInt(Item.count?.N ?? "0");
+    const windowStillActive   = (nowMs - existingWindowStart) <= windowDurationMs;
+    if (windowStillActive) {
+      count          = existingCount + 1;
+      newWindowStart = existingWindowStart; // preserve original window boundary
+    }
+    // else: window expired — reset to count=1, newWindowStart=nowMs
   }
 
   const ttl = Math.floor(nowMs / 1000) + windowMinutes * 90;
@@ -105,7 +117,7 @@ async function checkCounter(lockId: string, nowMs: number, windowMinutes: number
     ExpressionAttributeNames: { "#c": "count", "#ttl": "ttl" },
     ExpressionAttributeValues: {
       ":c":   { N: String(count) },
-      ":ws":  { N: String(windowStart) },
+      ":ws":  { N: String(newWindowStart) },
       ":la":  { N: String(nowMs) },
       ":ttl": { N: String(ttl) },
     },
