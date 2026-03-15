@@ -1,0 +1,13 @@
+{
+  "name": "cgm-events-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3",
+    "@aws-sdk/util-dynamodb": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "esbuild": "^0.21"
+  }
+}

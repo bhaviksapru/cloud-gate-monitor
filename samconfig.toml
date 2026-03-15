@@ -1,0 +1,17 @@
+version = 0.1
+
+[default.build.parameters]
+use_container = false
+
+[default.deploy.parameters]
+stack_name        = "cloud-gate-monitor"
+region            = "ca-central-1"
+capabilities      = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+resolve_s3        = true
+confirm_changeset = false
+parameter_overrides = """
+  AlertPhoneNumber=+1XXXXXXXXXX
+  FailedAttemptThreshold=1
+  FailedAttemptWindowMinutes=60
+  TTLockClientSecret=YOUR_TTLOCK_SECRET
+"""
