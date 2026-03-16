@@ -86,8 +86,20 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
         )}
-        {tab === "clips"  && <div style={s.full}><span style={s.section}>Recorded clips — 7 day retention</span><ClipBrowser /></div>}
-        {tab === "events" && <div style={s.full}><span style={s.section}>Lock event history</span><EventFeed /></div>}
+        {tab === "clips" && (
+          <div style={s.full}>
+            <span style={s.section}>Recorded clips — 7 day retention</span>
+            {/* Pass streams so ClipBrowser always has the camera list,
+                even when no clips exist for the selected date */}
+            <ClipBrowser streams={streams} />
+          </div>
+        )}
+        {tab === "events" && (
+          <div style={s.full}>
+            <span style={s.section}>Lock event history</span>
+            <EventFeed />
+          </div>
+        )}
       </main>
     </div>
   );
