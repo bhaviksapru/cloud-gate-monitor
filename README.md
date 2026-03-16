@@ -2,6 +2,7 @@
 
 https://bhaviksapru.github.io/
 
+
 Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 
 **What it does**
@@ -10,7 +11,17 @@ Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 - React dashboard behind Cognito (TOTP MFA, invite-only)
 - Pi uses IoT X.509 certificate for AWS access — no IAM keys on device
 
-**Cost** ~$1–3/month for 2 cameras (clips-only storage dominates; see cost note at bottom)
+**Cost**
+| Cameras | Monthly cost |
+|---------|-------------|
+| 1 | ~$1.50 |
+| 2 | ~$2.80 |
+| 4 | ~$5.50 |
+
+Reference Architecture-http://bhaviksapru.github.io/cloud-gate-monitor/architecture/aws-reference-architecture.html 
+Sequence Diagram-https://bhaviksapru.github.io/cloud-gate-monitor/architecture/sequence-diagram.html
+Financial Analysis-https://bhaviksapru.github.io/cloud-gate-monitor/architecture/financial-analysis.html
+
 
 ---
 
@@ -342,16 +353,3 @@ cloud-gate-monitor/
 ```
 
 ---
-
-## Cost note
-For detailed financial analysis, visit https://bhaviksapru.github.io/cloud-gate-monitor/architecture/financial-analysis.html
-
-With `hls_time 10` (already set in `stream.sh` above), expect approximately:
-
-| Cameras | Monthly cost |
-|---------|-------------|
-| 1 | ~$1.50 |
-| 2 | ~$2.80 |
-| 4 | ~$5.50 |
-
-S3 PUT requests for HLS segments are the main cost driver. Clips and Lambda/DDB/IoT are negligible.
