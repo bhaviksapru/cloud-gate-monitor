@@ -1,5 +1,7 @@
 # cloud-gate-monitor
+
 https://bhaviksapru.github.io/
+
 Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 
 **What it does**
