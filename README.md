@@ -344,6 +344,7 @@ cloud-gate-monitor/
 ---
 
 ## Cost note
+For detailed financial analysis, visit https://bhaviksapru.github.io/cloud-gate-monitor/architecture/financial-analysis.html
 
 With `hls_time 10` (already set in `stream.sh` above), expect approximately:
 
