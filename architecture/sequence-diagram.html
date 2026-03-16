@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>cloud-gate-monitor — Sequence Diagram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#07090e; --s1:#0d1018; --s2:#12161f; --s3:#181d29;
+    --border:#232840; --border2:#2d3450;
+    --amber:#f5a623; --amber-glow:rgba(245,166,35,.08);
+    --green:#3dd68c; --green-dim:#1a6640;
+    --red:#f75f6c; --red-dim:#7a2028;
+    --blue:#5b9cf6; --blue-dim:#1e3d7a;
+    --teal:#34d1bf; --teal-dim:#145c54;
+    --orange:#fb923c;
+    --text:#7d899e; --text2:#a8b4c4; --white:#dde4f0;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'IBM Plex Sans',sans-serif;
+  }
+  body { background:var(--bg); color:var(--text); font-family:var(--mono); font-size:11px; padding:32px 24px 48px; min-height:100vh; overflow-x:auto; }
+  h1 { font-size:10px; font-weight:600; color:var(--amber); letter-spacing:.22em; text-transform:uppercase; margin-bottom:3px; }
+  .sub { font-size:9px; color:var(--text); letter-spacing:.1em; margin-bottom:30px; }
+
+  /* ── Actor row ── */
+  .actor-row { display:flex; gap:0; align-items:flex-end; padding-left:110px; width:1040px; }
+  .actor { width:120px; flex-shrink:0; text-align:center; padding:9px 4px 7px; border:1px solid var(--border2); background:var(--s2); }
+  .actor-name { font-size:9px; font-weight:600; color:var(--white); letter-spacing:.08em; line-height:1.3; }
+  .actor-sub  { font-size:8px; color:var(--text); margin-top:2px; line-height:1.3; }
+  .actor.ext    { border-color:var(--green-dim); background:rgba(61,214,140,.05); }
+  .actor.ext    .actor-name { color:var(--green); }
+  .actor.lam    { border-color:rgba(245,166,35,.3); background:var(--amber-glow); }
+  .actor.lam    .actor-name { color:var(--amber); }
+  .actor.data   { border-color:var(--teal-dim); background:rgba(52,209,191,.05); }
+  .actor.data   .actor-name { color:var(--teal); }
+  .actor.ui     { border-color:var(--blue-dim); background:rgba(91,156,246,.05); }
+  .actor.ui     .actor-name { color:var(--blue); }
+  .actor.iot    { border-color:rgba(0,188,212,.35); background:rgba(0,188,212,.05); }
+  .actor.iot    .actor-name { color:#00BCD4; }
+
+  /* ── SVG diagram ── */
+  .seq-svg { display:block; margin-left:110px; margin-top:0; }
+
+  /* ── Legend ── */
+  .legend { display:flex; gap:20px; flex-wrap:wrap; margin-top:24px; padding-top:16px; border-top:1px solid var(--border); padding-left:110px; }
+  .li { display:flex; align-items:center; gap:7px; font-size:8.5px; color:var(--text); }
+  .li-line { width:24px; height:1px; }
+</style>
+</head>
+<body>
+
+<h1>System Interaction — Sequence Diagram</h1>
+<p class="sub">cloud-gate-monitor · three core flows: camera stream, gate alert, dashboard</p>
+
+<!-- ACTOR HEADER ROW -->
+<div class="actor-row">
+  <div class="actor ext">
+    <div class="actor-name">TAPO Camera</div>
+    <div class="actor-sub">RTSP :554</div>
+  </div>
+  <div class="actor ext">
+    <div class="actor-name">Raspberry Pi</div>
+    <div class="actor-sub">ffmpeg<br/>stream.sh</div>
+  </div>
+  <div class="actor iot">
+    <div class="actor-name">IoT Core</div>
+    <div class="actor-sub">Cred Provider</div>
+  </div>
+  <div class="actor data">
+    <div class="actor-name">S3 Bucket</div>
+    <div class="actor-sub">live/ + clips/</div>
+  </div>
+  <div class="actor ui">
+    <div class="actor-name">CloudFront</div>
+    <div class="actor-sub">CDN + SPA</div>
+  </div>
+  <div class="actor lam">
+    <div class="actor-name">Lambda × 3</div>
+    <div class="actor-sub">webhook / clip<br/>events</div>
+  </div>
+  <div class="actor data">
+    <div class="actor-name">DynamoDB</div>
+    <div class="actor-sub">cgm-events</div>
+  </div>
+  <div class="actor ext">
+    <div class="actor-name">Browser</div>
+    <div class="actor-sub">React + hls.js<br/>Cognito MFA</div>
+  </div>
+</div>
+
+<svg class="seq-svg"
+     xmlns="http://www.w3.org/2000/svg"
+     width="960" height="860"
+     style="font-family:'IBM Plex Mono',monospace;">
+  <defs>
+    <marker id="a-amb"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f5a623"/></marker>
+    <marker id="a-grn"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3dd68c"/></marker>
+    <marker id="a-red"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f75f6c"/></marker>
+    <marker id="a-tel"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#34d1bf"/></marker>
+    <marker id="a-blu"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b9cf6"/></marker>
+    <marker id="a-iot"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#00BCD4"/></marker>
+    <marker id="a-org"  markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#fb923c"/></marker>
+  </defs>
+
+  <!-- Lifelines (col centres: 60 180 300 420 540 660 780 900) -->
+  <g opacity=".35">
+    <line x1="60"  y1="0" x2="60"  y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="180" y1="0" x2="180" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="420" y1="0" x2="420" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="540" y1="0" x2="540" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="660" y1="0" x2="660" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="780" y1="0" x2="780" y2="860" stroke="#232840" stroke-width="1"/>
+    <line x1="900" y1="0" x2="900" y2="860" stroke="#232840" stroke-width="1"/>
+  </g>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       FLOW ①  CAMERA → S3 → CloudFront
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <text x="0" y="22" fill="#f5a623" font-size="8" font-weight="600" letter-spacing="2">① CAMERA STREAM — Pi authenticates with IoT, uploads HLS segments + 5-min clips to S3</text>
+  <line x1="0" y1="26" x2="960" y2="26" stroke="#232840" stroke-width="1"/>
+
+  <!-- Pi → IoT: credential request -->
+  <line x1="180" y1="48" x2="294" y2="48" stroke="#00BCD4" stroke-width="1.4" marker-end="url(#a-iot)"/>
+  <text x="182" y="44" fill="#a8b4c4" font-size="8">HTTPS GET /role-aliases/cgm-pi-alias/credentials  (mTLS X.509 cert)</text>
+  <line x1="294" y1="62" x2="186" y2="62" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="188" y="58" fill="#3dd68c" font-size="8">{accessKeyId, secretKey, sessionToken}  — 1hr TTL, refreshed hourly</text>
+
+  <!-- Camera → Pi: RTSP -->
+  <line x1="60" y1="82" x2="174" y2="82" stroke="#f5a623" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="62" y="78" fill="#a8b4c4" font-size="8">RTSP tcp  H.264 raw stream (copy — no transcode)</text>
+
+  <!-- Pi → S3: HLS segments -->
+  <rect x="172" y="92" width="16" height="52" fill="#1e2434" stroke="#2d3450" stroke-width="1"/>
+  <text x="192" y="106" fill="#7d899e" font-size="8">ffmpeg mux → /tmp/cgm/live/{cam}/*.ts + stream.m3u8</text>
+  <text x="192" y="118" fill="#7d899e" font-size="8">inotifywait detects close_write → upload_live()</text>
+
+  <line x1="180" y1="130" x2="414" y2="130" stroke="#f5a623" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="182" y="126" fill="#a8b4c4" font-size="8">aws s3 sync live/{cam}/  →  s3://cgm-video/live/{cam}/  --cache-control max-age=2</text>
+  <line x1="414" y1="142" x2="186" y2="142" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="188" y="138" fill="#3dd68c" font-size="8">200 OK  (repeated every ~10s per segment cycle)</text>
+
+  <!-- Pi → S3: 5-min clips -->
+  <line x1="180" y1="158" x2="414" y2="158" stroke="#fb923c" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="182" y="154" fill="#a8b4c4" font-size="8">aws s3 cp YYYYMMDD_HHMMSS.mp4  →  s3://cgm-video/clips/{cam}/YYYY/MM/DD/  (every 5 min)</text>
+  <line x1="414" y1="170" x2="186" y2="170" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="188" y="166" fill="#3dd68c" font-size="8">200 OK  → rm local file  (S3 lifecycle deletes after 7 days)</text>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       FLOW ②  TTLOCK GATE EVENT + ALERT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <line x1="0" y1="194" x2="960" y2="194" stroke="#1e2434" stroke-width="1"/>
+  <text x="0" y="214" fill="#f5a623" font-size="8" font-weight="600" letter-spacing="2">② GATE EVENT — TTLock fires webhook → Lambda verifies, stores in DDB, tracks failures, sends SMS if threshold hit</text>
+  <line x1="0" y1="218" x2="960" y2="218" stroke="#232840" stroke-width="1"/>
+
+  <!-- TTLock Cloud → Lambda (via API GW, simplified) -->
+  <line x1="60" y1="240" x2="654" y2="240" stroke="#f5a623" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="62" y="236" fill="#a8b4c4" font-size="8">POST /webhook/ttlock  {lockId, recordType, success:0, serverDate}  X-TTLock-Signature: sha256=HMAC</text>
+
+  <rect x="652" y="250" width="16" height="180" fill="#1e2434" stroke="#2d3450" stroke-width="1"/>
+
+  <text x="672" y="264" fill="#7d899e" font-size="8">1. loadConfig() → SSM GetParameters(/cgm/threshold, /cgm/window, /cgm/phone, /cgm/secret)</text>
+  <text x="672" y="278" fill="#7d899e" font-size="8">2. verifySignature(body, header, secret)  — constant-time HMAC-SHA256 compare</text>
+
+  <!-- ALT: sig fail -->
+  <rect x="2" y="286" width="956" height="36" fill="none" stroke="#7a2028" stroke-width="1"/>
+  <rect x="2" y="286" width="26" height="12" fill="#7a2028"/>
+  <text x="4" y="296" fill="#f75f6c" font-size="8" font-weight="600">ALT</text>
+  <text x="32" y="296" fill="#7d899e" font-size="8">  [HMAC mismatch]  → 401 Unauthorized — event dropped silently</text>
+  <line x1="654" y1="312" x2="66" y2="312" stroke="#f75f6c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-red)"/>
+  <text x="70" y="308" fill="#f75f6c" font-size="8">401 — TTLock retries but Lambda always 200s internally</text>
+
+  <!-- Store event -->
+  <line x1="660" y1="334" x2="774" y2="334" stroke="#34d1bf" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+  <text x="662" y="330" fill="#34d1bf" font-size="8">PutItem  pk=LOCK#lockId  sk=EVENT#ts  gsi1pk=DATE#date  gsi1sk=TIME#…  ttl=now+7days</text>
+  <line x1="774" y1="346" x2="666" y2="346" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+
+  <!-- Check counter + update -->
+  <text x="672" y="366" fill="#7d899e" font-size="8">isFailed = (success===0) AND recordType IN {1,6,9,12,47,55}</text>
+  <line x1="660" y1="376" x2="774" y2="376" stroke="#34d1bf" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+  <text x="662" y="372" fill="#34d1bf" font-size="8">GetItem FAILED_CTR  →  count++ within window  OR  reset(count=1)  →  UpdateItem</text>
+  <line x1="774" y1="388" x2="666" y2="388" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+
+  <!-- OPT: send SMS -->
+  <rect x="2" y="396" width="956" height="32" fill="none" stroke="#2d3450" stroke-width="1"/>
+  <rect x="2" y="396" width="30" height="12" fill="#2d3450"/>
+  <text x="4" y="406" fill="#a8b4c4" font-size="8" font-weight="600">OPT</text>
+  <text x="38" y="406" fill="#7d899e" font-size="8">  [count ≥ threshold within window]  →  sns.Publish(phone, "GATE ALERT Lock #X: N/threshold failed attempts…")</text>
+  <line x1="660" y1="418" x2="66" y2="418" stroke="#f75f6c" stroke-width="1.4" marker-end="url(#a-red)"/>
+  <text x="70" y="414" fill="#f75f6c" font-size="8">SNS SMS to phone from /cgm/phone SSM param</text>
+
+  <!-- 200 back -->
+  <line x1="654" y1="440" x2="66" y2="440" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="70" y="436" fill="#3dd68c" font-size="8">200 {received:true}  (always 200 — TTLock retries on non-200)</text>
+
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       FLOW ③  DASHBOARD — auth + queries
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <line x1="0" y1="462" x2="960" y2="462" stroke="#1e2434" stroke-width="1"/>
+  <text x="0" y="482" fill="#f5a623" font-size="8" font-weight="600" letter-spacing="2">③ DASHBOARD — Cognito PKCE + TOTP login, live HLS view, clip browsing, event history</text>
+  <line x1="0" y1="486" x2="960" y2="486" stroke="#232840" stroke-width="1"/>
+
+  <!-- Browser → CloudFront: SPA load -->
+  <line x1="900" y1="506" x2="546" y2="506" stroke="#5b9cf6" stroke-width="1.4" marker-end="url(#a-blu)"/>
+  <text x="550" y="502" fill="#a8b4c4" font-size="8">GET /  →  index.html + JS bundle (served from S3 via OAC)</text>
+  <line x1="546" y1="518" x2="894" y2="518" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+
+  <!-- Cognito PKCE -->
+  <text x="550" y="538" fill="#7d899e" font-size="8">getAccessToken() expired → PKCE redirect → Cognito hosted UI → user enters TOTP → code exchange → JWT in sessionStorage</text>
+
+  <!-- Live HLS -->
+  <line x1="900" y1="556" x2="546" y2="556" stroke="#5b9cf6" stroke-width="1.4" marker-end="url(#a-blu)"/>
+  <text x="550" y="552" fill="#a8b4c4" font-size="8">hls.js GET /live/{cam}/stream.m3u8  (CachingDisabled behavior — no CloudFront cache)</text>
+  <line x1="546" y1="568" x2="894" y2="568" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="550" y="564" fill="#3dd68c" font-size="8">HLS playlist → hls.js fetches segments → &lt;video&gt; plays</text>
+
+  <!-- Clip API call -->
+  <line x1="900" y1="588" x2="666" y2="588" stroke="#5b9cf6" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="670" y="584" fill="#a8b4c4" font-size="8">GET /clips?camera=front-gate&amp;date=2025-03-14  Auth: Bearer {JWT}</text>
+  <line x1="660" y1="604" x2="426" y2="604" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+  <text x="430" y="600" fill="#34d1bf" font-size="8">S3 ListObjectsV2  Prefix=clips/front-gate/2025/03/14/</text>
+  <line x1="426" y1="616" x2="666" y2="616" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-amb)"/>
+  <text x="670" y="628" fill="#7d899e" font-size="8">getSignedUrl(GetObjectCommand, expiresIn:900)  per clip</text>
+  <line x1="660" y1="638" x2="894" y2="638" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="670" y="634" fill="#3dd68c" font-size="8">{clips:[{key, camera, date, time, sizeBytes, presignedUrl}]}</text>
+
+  <!-- Events API call -->
+  <line x1="900" y1="660" x2="666" y2="660" stroke="#5b9cf6" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="670" y="656" fill="#a8b4c4" font-size="8">GET /events?date=2025-03-14  Auth: Bearer {JWT}</text>
+  <line x1="660" y1="674" x2="786" y2="674" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+  <text x="664" y="670" fill="#34d1bf" font-size="8">Query gsi1  pk=DATE#2025-03-14  ScanIndexForward=false  Limit=100</text>
+  <line x1="786" y1="686" x2="666" y2="686" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-amb)"/>
+  <line x1="660" y1="700" x2="894" y2="700" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="664" y="696" fill="#3dd68c" font-size="8">{events:[{lockId, recordLabel, success, isoDate, batteryLevel}]}</text>
+
+  <!-- Summary -->
+  <line x1="900" y1="720" x2="666" y2="720" stroke="#5b9cf6" stroke-width="1.4" marker-end="url(#a-amb)"/>
+  <text x="670" y="716" fill="#a8b4c4" font-size="8">GET /events/summary  (polled every 60s — fills header chips)</text>
+  <line x1="660" y1="734" x2="786" y2="734" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-tel)"/>
+  <line x1="786" y1="746" x2="666" y2="746" stroke="#34d1bf" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#a-amb)"/>
+  <line x1="660" y1="760" x2="894" y2="760" stroke="#3dd68c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a-grn)"/>
+  <text x="664" y="756" fill="#3dd68c" font-size="8">{totalToday:14, failedToday:2, successToday:12, lastEvent:{…}}</text>
+
+  <line x1="0" y1="778" x2="960" y2="778" stroke="#232840" stroke-width="1"/>
+</svg>
+
+<div class="legend">
+  <div class="li"><div class="li-line" style="background:#f5a623;"></div>S3 upload / Lambda invoke</div>
+  <div class="li"><div class="li-line" style="background:#3dd68c;"></div>Response / return</div>
+  <div class="li"><div class="li-line" style="background:#34d1bf;border-top:1px dashed #34d1bf;height:0;"></div>DynamoDB / S3 read-write</div>
+  <div class="li"><div class="li-line" style="background:#5b9cf6;"></div>Browser → CloudFront / API GW</div>
+  <div class="li"><div class="li-line" style="background:#f75f6c;border-top:1px dashed;height:0;"></div>Alert / auth failure</div>
+  <div class="li"><div class="li-line" style="background:#00BCD4;"></div>IoT credential exchange</div>
+  <div style="margin-left:auto;font-size:8px;color:var(--text);">Pi → AWS via IoT X.509 (no IAM keys) · All /clips /events routes require Cognito JWT</div>
+</div>
+
+</body>
+</html>
