@@ -237,6 +237,16 @@ EOF
 sudo chmod +x /opt/cgm/stream.sh && sudo chown cgm:cgm /opt/cgm/stream.sh
 ```
 
+Note- If you only want to send clips where motion is detected then consider appending this pararmeter below to the ffmpeg command
+-vf "select='gt(scene,<float e.g. 0.05>)'" \
+
+Note- If you want to monitor for motion only in a part of the area consider appending this parameter below to the ffmpeg cmd, after adjusting your coordinates.
+-vf "crop=500:500:100:100,select='gt(scene,0.05)'" \
+  -map 0:v:0 -map 0:a? -c:v libx264 -preset ultrafast \
+
+Both the above modifications will put more stress on ffmpeg running on pi so keep that in mind.
+
+
 **On the Pi — create systemd service `/etc/systemd/system/cgm-camera@.service`:**
 
 ```bash
