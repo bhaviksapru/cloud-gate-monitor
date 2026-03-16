@@ -11,7 +11,7 @@ Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 
 -have custom logic around what notifications one wants to receive, as sms
 
--dashboard to view live streams as well as recorded clips for the past week.
+-secure dashboard to view live streams as well as recorded clips for the past week.
 
 - Streams RTSP from TAPO cameras → S3 → CloudFront (live HLS + 7-day recorded clips)
 - Receives TTLock gate events → DynamoDB → SMS alert after N failed attempts
