@@ -1,75 +1,114 @@
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  GetCommand,
+  UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
 
-const ddb   = new DynamoDBClient({});
-const TABLE = process.env.TABLE_NAME!;
+const ddb    = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const TABLE  = process.env.EVENTS_TABLE!; // cgm-events
 
+// recordType → human-readable label (matches TTLock spec)
 const RECORD_LABELS: Record<number, string> = {
-  1: "Bluetooth unlock",  2: "App lock",          3: "Auto lock",
-  4: "Auto unlock",       5: "Unlock inside",      6: "Keyboard unlock",
-  7: "IC card unlock",    8: "Fingerprint unlock",  9: "Wristband unlock",
-  12: "Remote unlock",   44: "Homekit unlock",     47: "Fingerprint failed",
-  55: "Face recognition failed",
+  1: "Bluetooth unlock", 2: "App lock", 3: "Auto lock", 4: "Auto unlock",
+  5: "Lock manually", 6: "Keyboard unlock", 7: "IC card unlock",
+  8: "Remote unlock", 9: "Keyboard password error", 10: "IC card error",
+  11: "Fingerprint unlock", 12: "Remote unlock via app",
+  44: "Fingerprint error", 45: "Door open alarm", 46: "Door long open alarm",
+  47: "Keyboard lock-out", 55: "Face recognition failed",
 };
 
-async function byDate(date: string, limit: number, lastKey?: string) {
-  const { Items = [], LastEvaluatedKey } = await ddb.send(new QueryCommand({
-    TableName: TABLE,
-    IndexName: "gsi1",
-    KeyConditionExpression: "gsi1pk = :pk AND begins_with(gsi1sk, :p)",
-    ExpressionAttributeValues: {
-      ":pk": { S: `DATE#${date}` },
-      ":p":  { S: "TIME#" },
-    },
-    Limit: limit,
-    ScanIndexForward: false,
-    ExclusiveStartKey: lastKey
-      ? JSON.parse(Buffer.from(lastKey, "base64url").toString())
-      : undefined,
+function recordLabel(type: number): string {
+  return RECORD_LABELS[type] ?? `Record type ${type}`;
+}
+
+// ─── /events ────────────────────────────────────────────────────────────────
+async function queryEvents(query: Record<string, string>) {
+  const date    = query.date ?? new Date().toISOString().slice(0, 10); // default today
+  const lastKey = query.lastKey ? JSON.parse(decodeURIComponent(query.lastKey)) : undefined;
+
+  const result = await ddb.send(new QueryCommand({
+    TableName:              TABLE,
+    IndexName:              "gsi1",
+    KeyConditionExpression: "gsi1pk = :pk",
+    ExpressionAttributeValues: { ":pk": `DATE#${date}` },
+    ScanIndexForward:       false,   // newest first
+    Limit:                  100,
+    ExclusiveStartKey:      lastKey,
+  }));
+
+  const events = (result.Items ?? []).map(item => ({
+    lockId:       item.lockId,
+    recordType:   item.recordType,
+    recordLabel:  recordLabel(item.recordType),
+    success:      item.success ?? item.recordType === 1,
+    username:     item.username ?? null,
+    isoDate:      item.isoDate,
+    serverDate:   item.serverDate,
+    batteryLevel: item.batteryLevel ?? null,
   }));
 
   return {
-    events: Items.map(item => {
-      const d = unmarshall(item);
-      return {
-        lockId:      d.lockId,
-        recordType:  d.recordType,
-        recordLabel: RECORD_LABELS[d.recordType as number] ?? `Type ${d.recordType}`,
-        success:     d.success === 1,
-        username:    d.username || null,
-        isoDate:     new Date(d.serverDate as number).toISOString(),
-        serverDate:  d.serverDate,
-        batteryLevel: d.rawEvent ? (JSON.parse(d.rawEvent as string)).electricQuantity ?? null : null,
-      };
-    }),
+    events,
     date,
-    lastKey: LastEvaluatedKey
-      ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString("base64url")
+    lastKey: result.LastEvaluatedKey
+      ? encodeURIComponent(JSON.stringify(result.LastEvaluatedKey))
       : undefined,
   };
 }
 
-async function summary() {
-  const date   = new Date().toISOString().slice(0, 10);
-  const result = await byDate(date, 500);
+// ─── /events/summary ────────────────────────────────────────────────────────
+async function querySummary() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const result = await ddb.send(new QueryCommand({
+    TableName:              TABLE,
+    IndexName:              "gsi1",
+    KeyConditionExpression: "gsi1pk = :pk",
+    ExpressionAttributeValues: { ":pk": `DATE#${today}` },
+    ScanIndexForward:       false,
+    Limit:                  500, // enough for a day's events; avoids full scan
+  }));
+
+  const items = result.Items ?? [];
+  const failTypes = new Set([9, 10, 44, 47, 55]); // failure record types
+  const failed  = items.filter(i => failTypes.has(i.recordType) || i.success === false).length;
+  const success = items.length - failed;
+
+  const lastItem = items[0] ?? null;
+  const lastEvent = lastItem ? {
+    lockId:      lastItem.lockId,
+    recordType:  lastItem.recordType,
+    recordLabel: recordLabel(lastItem.recordType),
+    success:     lastItem.success ?? true,
+    username:    lastItem.username ?? null,
+    isoDate:     lastItem.isoDate,
+    serverDate:  lastItem.serverDate,
+    batteryLevel: lastItem.batteryLevel ?? null,
+  } : null;
+
   return {
-    date,
-    totalToday:   result.events.length,
-    failedToday:  result.events.filter(e => !e.success).length,
-    successToday: result.events.filter(e => e.success).length,
-    lastEvent:    result.events[0] ?? null,
+    date:         today,
+    totalToday:   items.length,
+    failedToday:  failed,
+    successToday: success,
+    lastEvent,
   };
 }
 
-export const handler = async (event: { rawPath?: string; queryStringParameters?: Record<string, string> }) => {
+// ─── Handler ─────────────────────────────────────────────────────────────────
+export const handler = async (event: {
+  rawPath?: string;
+  queryStringParameters?: Record<string, string>;
+}) => {
   try {
     const path  = event.rawPath ?? "/events";
-    const q     = event.queryStringParameters ?? {};
-    const limit = Math.min(parseInt(q.limit ?? "100"), 500);
+    const query = event.queryStringParameters ?? {};
 
-    const body = path === "/events/summary"
-      ? await summary()
-      : await byDate(q.date ?? new Date().toISOString().slice(0, 10), limit, q.lastKey);
+    const body = path.startsWith("/events/summary")
+      ? await querySummary()
+      : await queryEvents(query);
 
     return {
       statusCode: 200,
