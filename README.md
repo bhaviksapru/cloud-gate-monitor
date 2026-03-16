@@ -18,8 +18,10 @@ Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 | 2 | ~$2.80 |
 | 4 | ~$5.50 |
 
-Reference Architecture-http://bhaviksapru.github.io/cloud-gate-monitor/architecture/aws-reference-architecture.html 
+Reference Architecture-http://bhaviksapru.github.io/cloud-gate-monitor/architecture/aws-reference-architecture.html
+
 Sequence Diagram-https://bhaviksapru.github.io/cloud-gate-monitor/architecture/sequence-diagram.html
+
 Financial Analysis-https://bhaviksapru.github.io/cloud-gate-monitor/architecture/financial-analysis.html
 
 
