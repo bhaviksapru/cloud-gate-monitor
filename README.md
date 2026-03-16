@@ -9,7 +9,7 @@ Home CCTV + gate monitoring — Raspberry Pi · TAPO C100 · TTLock → AWS
 
 Gives the ability to 
 
--bypass the cloud storage offered by camera and utilize one's own
+-bypass the paid cloud storage plans offered by camera and utilize one's own at a lower cost
 
 -have custom logic around what notifications one wants to receive, as sms
 
