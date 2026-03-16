@@ -3,7 +3,44 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>cloud-gate-monitor</title>
+  <meta name="description" content="Cloud Gate Monitor by Bhavik Sapru — home CCTV and gate monitoring on AWS using Raspberry Pi, TAPO cameras, and TTLock, for ~$3/month.">
+  <meta name="author" content="Bhavik Sapru">
+  <meta name="robots" content="index, follow">
+  <title>Cloud Gate Monitor — Bhavik Sapru</title>
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="article">
+  <meta property="og:url"         content="https://bhaviksapru.github.io/cloud-gate-monitor/">
+  <meta property="og:title"       content="Cloud Gate Monitor — Bhavik Sapru">
+  <meta property="og:description" content="Home CCTV and gate monitoring on AWS — Raspberry Pi, TAPO cameras, HLS streaming, TTLock events, SMS alerts for ~$3/month.">
+  <meta property="og:site_name"   content="Bhavik Sapru">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary">
+  <meta name="twitter:title"       content="Cloud Gate Monitor — Bhavik Sapru">
+  <meta name="twitter:description" content="Raspberry Pi + AWS IoT home security system for ~$3/month.">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://bhaviksapru.github.io/cloud-gate-monitor/">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Cloud Gate Monitor",
+    "author": {
+      "@type": "Person",
+      "name": "Bhavik Sapru",
+      "url": "https://bhaviksapru.github.io/"
+    },
+    "description": "Home CCTV and gate monitoring system using Raspberry Pi, TAPO C100 cameras, TTLock smart gate, and AWS IoT Core — running for approximately $3/month.",
+    "applicationCategory": "SecurityApplication",
+    "url": "https://bhaviksapru.github.io/cloud-gate-monitor/",
+    "codeRepository": "https://github.com/bhaviksapru/cloud-gate-monitor"
+  }
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -98,7 +135,6 @@
     .demo-text { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal); }
     .demo-text span { color:var(--muted); margin-left:0.8rem; font-size:0.58rem; }
 
-    /* ── DASHBOARD SUB-TABS (Live / Clips / Events) ── */
     .dash-tabs { display:flex; gap:0; border:1px solid var(--border2); width:fit-content; margin-bottom:1.5rem; }
     .dash-tab-btn { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; padding:0.45rem 1.1rem; background:none; border:none; color:var(--muted); cursor:pointer; transition:color 0.15s, background 0.15s; white-space:nowrap; line-height:1; }
     .dash-tab-btn + .dash-tab-btn { border-left:1px solid var(--border2); }
@@ -107,7 +143,6 @@
     .dash-tab-content { display:none; }
     .dash-tab-content.active { display:block; }
 
-    /* Dashboard shell */
     .dash-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
     .dash-brand { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:var(--white); }
     .dash-brand span { color:var(--teal); }
@@ -119,7 +154,6 @@
     .sdot.err { background:var(--red); box-shadow:0 0 6px var(--red); }
     @keyframes wblink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-    /* Stats row */
     .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.5rem; }
     .s-card { background:var(--panel); padding:1.4rem 1.6rem; position:relative; overflow:hidden; }
     .s-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:transparent; transition:background 0.4s; }
@@ -133,7 +167,6 @@
     @keyframes alert-glow { 0%,100%{color:var(--red);} 50%{color:#ff8a8a;} }
     .s-sub { font-size:0.7rem; color:var(--muted); margin-top:0.2rem; }
 
-    /* Main grid — live view */
     .dash-grid { display:grid; grid-template-columns:1fr 360px; gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.5rem; }
     .d-pane { background:var(--panel); padding:1.4rem; }
 
@@ -141,7 +174,6 @@
     .pane-tag::before { content:''; display:inline-block; width:14px; height:1px; background:var(--teal); }
     .pane-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--white); margin-bottom:1rem; }
 
-    /* Camera grid */
     .cam-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .cam-card { background:var(--panel2); border:1px solid var(--border2); border-radius:6px; overflow:hidden; }
     .cam-card.alert-cam { border-color:rgba(224,85,85,0.5); }
@@ -156,7 +188,6 @@
     .cam-overlay { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:8px 10px; background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 50%); }
     .cam-ts { font-family:'DM Mono',monospace; font-size:0.58rem; color:rgba(255,255,255,0.5); }
 
-    /* Alert panel */
     .alert-box { background:rgba(224,85,85,0.08); border:1px solid rgba(224,85,85,0.35); border-radius:6px; padding:12px 14px; margin-bottom:10px; }
     .alert-box.hidden { display:none; }
     .alert-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
@@ -165,13 +196,11 @@
     .alert-body { font-size:0.78rem; color:rgba(224,85,85,0.8); line-height:1.5; }
     .alert-meta { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); margin-top:6px; }
 
-    /* Attempt counter */
     .attempt-track { margin-bottom:12px; }
     .attempt-label { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between; }
     .attempt-bar-bg { height:4px; background:var(--border); border-radius:2px; }
     .attempt-bar-fill { height:4px; border-radius:2px; transition:width 0.6s ease, background 0.4s; }
 
-    /* Event feed */
     .event-feed { height:220px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
     .event-row { display:flex; align-items:center; gap:9px; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,0.03); animation:efade 0.4s ease; }
     @keyframes efade { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
@@ -182,7 +211,6 @@
     .e-label { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .e-time  { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); flex-shrink:0; }
 
-    /* ── CLIPS VIEW ── */
     .clips-shell { background:var(--panel); border:1px solid var(--border); margin-bottom:1.5rem; }
     .clips-toolbar { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--panel2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
     .clips-filter-label { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); }
@@ -191,7 +219,6 @@
     .clips-date { background:#0d0f14; border:1px solid var(--border2); border-radius:4px; color:var(--white); font-family:'DM Mono',monospace; font-size:0.7rem; padding:5px 10px; outline:none; cursor:pointer; }
     .clips-date:focus { border-color:var(--teal); }
 
-    /* Inline video player */
     .clips-player { border-bottom:1px solid var(--border); background:#080a0d; }
     .clips-player-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 14px; background:var(--panel2); border-bottom:1px solid var(--border); }
     .clips-player-title { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--white); flex:1; }
@@ -202,7 +229,6 @@
     .clips-close-btn:hover { color:var(--white); }
     .clips-video { width:100%; display:block; background:#000; max-height:260px; }
 
-    /* Clip grid */
     .clips-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1px; background:var(--border); padding:0; }
     .clip-card { background:var(--panel); cursor:pointer; transition:background 0.15s; position:relative; overflow:hidden; }
     .clip-card:hover { background:var(--panel2); }
@@ -223,7 +249,6 @@
     .clips-note { padding:10px 16px; font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); border-top:1px solid var(--border); display:flex; align-items:center; gap:6px; }
     .clips-note::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:rgba(42,206,190,0.4); flex-shrink:0; }
 
-    /* SMS notification popup */
     #sms-popup { position:fixed; bottom:2rem; right:2rem; z-index:999; max-width:320px; background:var(--panel); border:1px solid rgba(224,85,85,0.5); border-left:3px solid var(--red); padding:1rem 1.2rem; transition:opacity 0.4s, transform 0.4s; opacity:0; transform:translateY(8px); pointer-events:none; }
     #sms-popup.show { opacity:1; transform:translateY(0); pointer-events:auto; }
     .sms-label { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:0.4rem; }
@@ -314,7 +339,6 @@
       </div>
     </div>
 
-    <!-- Dashboard top bar -->
     <div class="dash-topbar">
       <div class="dash-brand">cloud-gate-<span>monitor</span></div>
       <div class="dash-status">
@@ -326,7 +350,6 @@
       </div>
     </div>
 
-    <!-- Stats row (shared across all sub-tabs) -->
     <div class="stat-row">
       <div class="s-card" id="d-card-total">
         <div class="s-label">Events Today</div>
@@ -350,7 +373,6 @@
       </div>
     </div>
 
-    <!-- Dashboard sub-tabs: Live | Clips | Events -->
     <div class="dash-tabs">
       <button class="dash-tab-btn active" onclick="Demo.switchDashTab('live', this)">● Live Feed</button>
       <button class="dash-tab-btn" onclick="Demo.switchDashTab('clips', this)">⬡ Recorded Clips</button>
@@ -360,7 +382,6 @@
     <!-- ── SUB-TAB: LIVE ── -->
     <div id="dash-tab-live" class="dash-tab-content active">
       <div class="dash-grid">
-        <!-- Camera feeds -->
         <div class="d-pane">
           <div class="pane-tag">Video</div>
           <div class="pane-title">Live Streams</div>
@@ -392,7 +413,6 @@
           </div>
         </div>
 
-        <!-- Alert panel + event feed -->
         <div class="d-pane" style="display:flex;flex-direction:column;gap:12px;">
           <div>
             <div class="pane-tag">Security</div>
@@ -422,7 +442,6 @@
         </div>
       </div>
 
-      <!-- Threshold control -->
       <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;">
         <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Threshold (SSM /cgm/threshold):</div>
         <div style="display:flex;gap:6px;">
@@ -438,7 +457,6 @@
     <!-- ── SUB-TAB: CLIPS ── -->
     <div id="dash-tab-clips" class="dash-tab-content">
       <div class="clips-shell">
-        <!-- Toolbar: camera filter + date picker -->
         <div class="clips-toolbar">
           <span class="clips-filter-label">Camera</span>
           <select class="clips-select" id="clips-cam-filter" onchange="Demo.filterClips()">
@@ -447,15 +465,11 @@
             <option value="backyard">backyard</option>
           </select>
           <span class="clips-filter-label" style="margin-left:8px;">Date</span>
-          <input type="date" class="clips-date" id="clips-date-filter"
-            onchange="Demo.filterClips()"
-            max="" />
+          <input type="date" class="clips-date" id="clips-date-filter" onchange="Demo.filterClips()" max="" />
           <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);">
             Clips stored in <span style="color:var(--teal);">s3://cgm-video/clips/{camera}/{yyyy}/{mm}/{dd}/</span> · 7-day lifecycle
           </div>
         </div>
-
-        <!-- Inline player (hidden until clip selected) -->
         <div class="clips-player" id="clips-player" style="display:none;">
           <div class="clips-player-head">
             <span class="clips-player-title" id="clips-player-title">—</span>
@@ -465,10 +479,7 @@
           </div>
           <canvas id="clips-player-canvas" class="clips-video" height="270" style="display:block;width:100%;"></canvas>
         </div>
-
-        <!-- Clip grid -->
         <div class="clips-grid" id="clips-grid"></div>
-
         <div class="clips-note" id="clips-note">
           Showing simulated clips — in production, each card links to a real S3 presigned URL (15-min TTL). Click any clip to preview in the inline player above.
         </div>
@@ -521,7 +532,6 @@
   </div>
 </section>
 
-<!-- SMS Popup -->
 <div id="sms-popup">
   <button class="sms-close" onclick="document.getElementById('sms-popup').classList.remove('show')">✕</button>
   <div class="sms-label">📱 SNS SMS Dispatched</div>
@@ -529,7 +539,6 @@
 </div>
 
 <script>
-// ── PAGE TAB SWITCHING ──────────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -540,615 +549,40 @@ function switchTab(tab) {
   if (tab === 'demo') Demo.init();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// DEMO ENGINE
-// ══════════════════════════════════════════════════════════════════════════════
 const Demo = (() => {
-  let initialized   = false;
-  let threshold     = 3;
-  let failCount     = 0;
-  let totalFails    = 0;
-  let totalEvents   = 0;
-  let alertFired    = false;
-  let frameTimers   = [];
-  let playerAnimId  = null;
-  let allEvents     = []; // master event log for the events tab
-
-  // ── Simulated clip data ─────────────────────────────────────────────────
-  function makeClips() {
-    const clips = [];
-    const today = new Date();
-    const cameras = ['front-gate', 'backyard'];
-    // Generate clips spanning the last 7 days
-    for (let d = 0; d < 7; d++) {
-      const dt = new Date(today);
-      dt.setDate(today.getDate() - d);
-      const dateStr = dt.toISOString().slice(0, 10);
-      cameras.forEach(cam => {
-        // 4–8 clips per camera per day
-        const count = 4 + Math.floor(Math.random() * 5);
-        for (let i = 0; i < count; i++) {
-          const h  = 6 + Math.floor(Math.random() * 16);
-          const m  = Math.floor(Math.random() * 60);
-          const s  = Math.floor(Math.random() * 60);
-          const hh = String(h).padStart(2,'0');
-          const mm = String(m).padStart(2,'0');
-          const ss = String(s).padStart(2,'0');
-          const mb = (18 + Math.random() * 60).toFixed(1);
-          clips.push({
-            camera: cam,
-            date: dateStr,
-            time: `${hh}:${mm}:${ss}`,
-            sizeBytes: Math.round(parseFloat(mb) * 1048576),
-            key: `clips/${cam}/${dateStr.replace(/-/g,'/')}/${hh}-${mm}-${ss}.mp4`,
-          });
-        }
-      });
-    }
-    return clips.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
-  }
-  const ALL_CLIPS = makeClips();
-
-  // ── Simulated event data ────────────────────────────────────────────────
-  const RECORD_LABELS = {
-    1:'Bluetooth unlock', 2:'App lock', 3:'Auto lock', 4:'Auto unlock',
-    6:'Keyboard unlock', 7:'IC card unlock', 12:'Remote unlock via app',
-    47:'Keyboard lock-out', 55:'Face recognition failed'
-  };
-
-  function makeEvents() {
-    const evts = [];
-    const today = new Date();
-    for (let d = 0; d < 7; d++) {
-      const dt = new Date(today);
-      dt.setDate(today.getDate() - d);
-      const dateStr = dt.toISOString().slice(0, 10);
-      const count = 8 + Math.floor(Math.random() * 14);
-      for (let i = 0; i < count; i++) {
-        const types = [1,1,1,2,3,4,6,12,12,47,55];
-        const type  = types[Math.floor(Math.random() * types.length)];
-        const fail  = type === 47 || type === 55;
-        const h  = 6 + Math.floor(Math.random() * 16);
-        const m  = Math.floor(Math.random() * 60);
-        const s  = Math.floor(Math.random() * 60);
-        const ts = new Date(dt);
-        ts.setHours(h, m, s, 0);
-        evts.push({
-          date:        dateStr,
-          isoDate:     ts.toISOString(),
-          recordType:  type,
-          recordLabel: RECORD_LABELS[type] || `Type ${type}`,
-          success:     !fail,
-          lockId:      12345,
-          batteryLevel: 80 + Math.floor(Math.random() * 20),
-        });
-      }
-    }
-    return evts.sort((a,b) => b.isoDate.localeCompare(a.isoDate));
-  }
-  let SIM_EVENTS = makeEvents();
-
-  // ── Helpers ─────────────────────────────────────────────────────────────
-  function el(id) { return document.getElementById(id); }
-
-  function simTime() {
-    return new Date().toLocaleTimeString('en-CA', {
-      hour:'2-digit', minute:'2-digit', second:'2-digit',
-      hour12:false, timeZone:'America/Toronto'
-    });
-  }
-
-  function fmtDate(iso) {
-    return new Date(iso).toLocaleTimeString('en-CA', {
-      hour:'2-digit', minute:'2-digit', second:'2-digit',
-      hour12:false, timeZone:'America/Toronto'
-    });
-  }
-
-  function todayStr() { return new Date().toISOString().slice(0,10); }
-
-  // ── Dashboard sub-tab switching ─────────────────────────────────────────
-  function switchDashTab(name, btn) {
-    document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.dash-tab-content').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    el('dash-tab-' + name).classList.add('active');
-    if (name === 'clips') renderClips();
-    if (name === 'events') renderEvents();
-  }
-
-  // ── Live feed event tracking ─────────────────────────────────────────────
-  function addLiveEvent(label, success) {
-    totalEvents++;
-    el('d-total').textContent = totalEvents;
-    flashCard('d-card-total');
-
-    const feed = el('d-feed');
-    const row  = document.createElement('div');
-    row.className = 'event-row';
-    row.innerHTML = `
-      <div class="e-dot ${success ? 'ok' : 'fail'}"></div>
-      <div class="e-body"><div class="e-label">${label}</div></div>
-      <div class="e-time">${simTime()}</div>`;
-    feed.insertBefore(row, feed.firstChild);
-    while (feed.children.length > 20) feed.removeChild(feed.lastChild);
-
-    // Also inject into simulated events so events tab stays in sync
-    const now = new Date().toISOString();
-    SIM_EVENTS.unshift({
-      date:        todayStr(),
-      isoDate:     now,
-      recordType:  success ? 1 : 47,
-      recordLabel: label,
-      success,
-      lockId:      12345,
-      batteryLevel: 87,
-    });
-  }
-
-  function updateFailUI() {
-    const pct = Math.min(100, (failCount / threshold) * 100);
-    const bar = el('d-attempt-bar');
-    bar.style.width = pct + '%';
-    bar.style.background = pct >= 100 ? 'var(--red)' : pct >= 60 ? 'var(--yellow)' : 'var(--green)';
-    el('d-attempt-fraction').textContent = failCount + ' / ' + threshold;
-    el('d-window').textContent = failCount;
-    const failEl = el('d-fail');
-    failEl.textContent = totalFails;
-    failEl.style.color = totalFails > 0 ? 'var(--red)' : 'var(--green)';
-    el('d-fail-sub').textContent = 'last: ' + simTime();
-    flashCard('d-card-fail');
-    flashCard('d-card-window');
-  }
-
-  function flashCard(id) {
-    const c = el(id); if (!c) return;
-    c.classList.add('flash');
-    setTimeout(() => c.classList.remove('flash'), 700);
-  }
-
-  function fireAlert() {
-    const box = el('d-alert-box');
-    box.classList.remove('hidden');
-    el('d-alert-body').textContent = `Lock #12345: ${failCount}/${threshold} failed attempts in 60-min window.`;
-    el('d-alert-meta').textContent = `SNS SMS dispatched · Time: ${simTime()} ET`;
-
-    const front = el('cam-front');
-    const badge = el('cam-front-badge');
-    front.classList.add('alert-cam');
-    badge.className = 'cam-badge alert';
-    badge.textContent = '⚠ ALERT';
-
-    el('sms-body').textContent =
-      `GATE ALERT\nLock #12345: ${failCount}/${threshold} failed attempt${failCount>1?'s':''}.\nTime: ${simTime()} ET\nView: https://cgm.cloudfront.net/?view=events`;
-    const popup = el('sms-popup');
-    popup.classList.add('show');
-    setTimeout(() => popup.classList.remove('show'), 7000);
-
-    el('d-fail').className = 's-val red';
-  }
-
-  function clearAlert() {
-    const box = el('d-alert-box');
-    if (box) box.classList.add('hidden');
-    const front = el('cam-front');
-    const badge = el('cam-front-badge');
-    if (front) front.classList.remove('alert-cam');
-    if (badge) { badge.className = 'cam-badge live'; badge.textContent = '● LIVE'; }
-  }
-
-  // ── Canvas camera simulation ─────────────────────────────────────────────
-  function drawCamera(canvasId, opts) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    let t = 0;
-
-    function frame() {
-      t++;
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, opts.sky || '#0a0c10');
-      grad.addColorStop(1, '#050608');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      for (let i = 0; i < 30; i++) {
-        const sx = ((i * 137 + 17) % W);
-        const sy = ((i * 89 + 23) % (H * 0.45));
-        const flicker = 0.4 + 0.6 * Math.sin(t * 0.05 + i);
-        ctx.globalAlpha = flicker;
-        ctx.fillRect(sx, sy, 1, 1);
-      }
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = '#111318';
-      ctx.fillRect(0, H * 0.6, W, H);
-
-      if (opts.showGate) {
-        ctx.fillStyle = '#1c2030';
-        ctx.fillRect(W*0.35, H*0.28, 10, H*0.38);
-        ctx.fillRect(W*0.62, H*0.28, 10, H*0.38);
-        ctx.strokeStyle = opts.alertMode ? 'rgba(224,85,85,0.7)' : '#2a2f42';
-        ctx.lineWidth = 2;
-        for (let b = 0; b < 5; b++) {
-          const bx = W*0.35+10+b*(W*0.27/5)+4;
-          ctx.beginPath(); ctx.moveTo(bx,H*0.28); ctx.lineTo(bx,H*0.62); ctx.stroke();
-        }
-        ctx.beginPath(); ctx.moveTo(W*0.35,H*0.34); ctx.lineTo(W*0.72,H*0.34); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(W*0.35,H*0.54); ctx.lineTo(W*0.72,H*0.54); ctx.stroke();
-        if (opts.alertMode) {
-          ctx.fillStyle = `rgba(224,85,85,${0.6+0.4*Math.sin(t*0.15)})`;
-          ctx.beginPath(); ctx.arc(W*0.485,H*0.44,6,0,Math.PI*2); ctx.fill();
-        }
-      }
-
-      ctx.strokeStyle = 'rgba(50,180,100,0.04)';
-      ctx.lineWidth = 0.5;
-      for (let g=0;g<8;g++){const gy=g*(H/8);ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
-      for (let g=0;g<12;g++){const gx=g*(W/12);ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
-
-      const vig = ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.75);
-      vig.addColorStop(0,'rgba(0,0,0,0)');
-      vig.addColorStop(1,'rgba(0,0,0,0.55)');
-      ctx.fillStyle = vig;
-      ctx.fillRect(0,0,W,H);
-
-      ctx.fillStyle = 'rgba(20,80,30,0.08)';
-      ctx.fillRect(0,0,W,H);
-
-      const scanY = (t*1.2)%H;
-      ctx.fillStyle = 'rgba(100,255,150,0.03)';
-      ctx.fillRect(0,scanY,W,2);
-    }
-
-    const id = setInterval(frame, 80);
-    frameTimers.push(id);
-  }
-
-  // ── Clip thumbnail canvas ─────────────────────────────────────────────────
-  function drawClipThumb(canvas, clip, active) {
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    // Seed RNG from clip key for stable appearance
-    let seed = 0;
-    for (let i=0;i<clip.key.length;i++) seed = (seed*31 + clip.key.charCodeAt(i)) & 0xffff;
-    const r = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-
-    const hour = parseInt(clip.time.slice(0,2));
-    const isNight = hour < 6 || hour >= 20;
-    const skyBase = isNight ? '#07090e' : '#1a2a3a';
-
-    const grad = ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0, skyBase);
-    grad.addColorStop(1, '#050608');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,H);
-
-    if (isNight) {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      for (let i=0;i<20;i++) {
-        ctx.globalAlpha = 0.3 + r()*0.7;
-        ctx.fillRect(r()*W, r()*H*0.45, 1, 1);
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.fillStyle = '#111318';
-    ctx.fillRect(0, H*0.6, W, H);
-
-    if (clip.camera === 'front-gate') {
-      ctx.fillStyle = '#1c2030';
-      ctx.fillRect(W*0.35,H*0.28,8,H*0.35);
-      ctx.fillRect(W*0.62,H*0.28,8,H*0.35);
-      ctx.strokeStyle = active ? 'rgba(42,206,190,0.6)' : '#252b3e';
-      ctx.lineWidth = 1.5;
-      for (let b=0;b<5;b++) {
-        const bx = W*0.35+8+b*(W*0.27/5)+3;
-        ctx.beginPath(); ctx.moveTo(bx,H*0.28); ctx.lineTo(bx,H*0.58); ctx.stroke();
-      }
-      ctx.beginPath(); ctx.moveTo(W*0.35,H*0.32); ctx.lineTo(W*0.72,H*0.32); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(W*0.35,H*0.50); ctx.lineTo(W*0.72,H*0.50); ctx.stroke();
-    } else {
-      // backyard — simple shrub silhouettes
-      ctx.fillStyle = '#0c0e14';
-      for (let i=0;i<4;i++) {
-        const bx = 20+i*(W/4); const bw = 20+r()*30; const bh = 15+r()*25;
-        ctx.beginPath();
-        ctx.arc(bx, H*0.6, bw/2, Math.PI, 0);
-        ctx.fill();
-      }
-    }
-
-    if (isNight) {
-      ctx.fillStyle = 'rgba(20,80,30,0.1)';
-      ctx.fillRect(0,0,W,H);
-    }
-
-    const vig = ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.7);
-    vig.addColorStop(0,'rgba(0,0,0,0)');
-    vig.addColorStop(1,'rgba(0,0,0,0.6)');
-    ctx.fillStyle = vig;
-    ctx.fillRect(0,0,W,H);
-
-    // "REC" indicator
-    ctx.fillStyle = 'rgba(224,85,85,0.8)';
-    ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '7px DM Mono, monospace';
-    ctx.fillText('REC', 15, 12);
-  }
-
-  // ── Clips tab rendering ──────────────────────────────────────────────────
-  function renderClips() {
-    const camFilter  = (el('clips-cam-filter')?.value  || '');
-    const dateFilter = (el('clips-date-filter')?.value || '');
-
-    let clips = ALL_CLIPS;
-    if (camFilter)  clips = clips.filter(c => c.camera === camFilter);
-    if (dateFilter) clips = clips.filter(c => c.date   === dateFilter);
-
-    const grid = el('clips-grid');
-    grid.innerHTML = '';
-
-    if (clips.length === 0) {
-      grid.innerHTML = '<div class="clips-empty">No clips found for this filter combination</div>';
-      return;
-    }
-
-    clips.forEach((clip, idx) => {
-      const card = document.createElement('div');
-      card.className = 'clip-card';
-      card.id = 'clip-card-' + idx;
-
-      const mb = (clip.sizeBytes / 1048576).toFixed(1);
-      const dur = Math.round(clip.sizeBytes / (1048576 * 0.35)); // approx 5min @ ~30Mbps
-      const durStr = Math.floor(dur/60) + ':' + String(dur%60).padStart(2,'0');
-
-      card.innerHTML = `
-        <div class="clip-thumb">
-          <canvas id="clip-thumb-${idx}" width="180" height="101"></canvas>
-          <div class="clip-thumb-play"><span class="clip-play-icon">▶</span></div>
-          <div class="clip-duration-badge">${durStr}</div>
-        </div>
-        <div class="clip-meta">
-          <span class="clip-cam">${clip.camera}</span>
-          <span class="clip-time">${clip.time}</span>
-          <span class="clip-size">${mb} MB · ${clip.date}</span>
-        </div>`;
-
-      card.addEventListener('click', () => openClipPlayer(clip, idx, clips));
-      grid.appendChild(card);
-
-      // Draw thumbnail after DOM insertion
-      requestAnimationFrame(() => {
-        const canvas = el('clip-thumb-' + idx);
-        if (canvas) drawClipThumb(canvas, clip, false);
-      });
-    });
-
-    el('clips-note').textContent =
-      `${clips.length} clip${clips.length!==1?'s':''} found · Stored in s3://cgm-video/clips/{camera}/{date}/ · Each served via 15-min S3 presigned URL`;
-  }
-
-  let playerCanvasTimer = null;
-
-  function openClipPlayer(clip, idx, clips) {
-    // Mark active card
-    document.querySelectorAll('.clip-card').forEach(c => c.classList.remove('active'));
-    const card = el('clip-card-' + idx);
-    if (card) card.classList.add('active');
-
-    const player = el('clips-player');
-    player.style.display = 'block';
-
-    const mb = (clip.sizeBytes / 1048576).toFixed(1);
-    el('clips-player-title').textContent = `${clip.camera} — ${clip.date} ${clip.time}`;
-    el('clips-player-meta').textContent  = `${mb} MB  ·  s3://cgm-video/${clip.key}`;
-
-    el('clips-dl-btn').onclick = () => {
-      alert(`In production: downloads ${clip.key} via S3 presigned URL (15-min TTL).\n\nURL format:\nhttps://d1234.cloudfront.net/${clip.key}?X-Amz-Expires=900&…`);
-    };
-
-    // Animate the player canvas (simulated playback)
-    const canvas = el('clips-player-canvas');
-    canvas.width  = canvas.offsetWidth || 800;
-    canvas.height = 270;
-
-    if (playerCanvasTimer) clearInterval(playerCanvasTimer);
-    let t = 0;
-    playerCanvasTimer = setInterval(() => {
-      t++;
-      drawClipThumb(canvas, clip, false);
-      // Overlay: progress bar + timestamp
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width, H = canvas.height;
-      const elapsed = (t * 0.08) % 300; // 5-min clip
-      const pct = elapsed / 300;
-
-      // Progress bar
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0, H-20, W, 20);
-      ctx.fillStyle = 'var(--teal)' in window ? '#2acebe' : '#2acebe';
-      ctx.fillRect(0, H-3, W*pct, 3);
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillRect(W*pct, H-3, W*(1-pct), 3);
-
-      // Timestamp overlay
-      const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
-      const ss = String(Math.floor(elapsed%60)).padStart(2,'0');
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = '11px DM Mono, monospace';
-      ctx.fillText(`${clip.time.slice(0,5)} + ${mm}:${ss}`, 10, H-6);
-
-      // "SIMULATED PLAYBACK" watermark
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.font = '10px DM Mono, monospace';
-      ctx.fillText('SIMULATED PLAYBACK', W-140, H-6);
-    }, 80);
-  }
-
-  function closePlayer() {
-    if (playerCanvasTimer) { clearInterval(playerCanvasTimer); playerCanvasTimer = null; }
-    const player = el('clips-player');
-    if (player) player.style.display = 'none';
-    document.querySelectorAll('.clip-card').forEach(c => c.classList.remove('active'));
-  }
-
-  // ── Events tab rendering ─────────────────────────────────────────────────
-  function renderEvents() {
-    const dateFilter = el('events-date-filter')?.value || todayStr();
-    const evts = SIM_EVENTS.filter(e => e.date === dateFilter);
-    const wrap = el('events-table-wrap');
-
-    const failed  = evts.filter(e => !e.success).length;
-    const success = evts.length - failed;
-
-    if (evts.length === 0) {
-      wrap.innerHTML = '<div class="clips-empty">No events for this date</div>';
-      return;
-    }
-
-    let html = `
-      <div style="display:flex;gap:8px;padding:10px 16px 6px;flex-wrap:wrap;">
-        <span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:var(--panel2);border:1px solid var(--border2);color:var(--muted);">${evts.length} total</span>
-        <span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.3);color:var(--green);">${success} ok</span>
-        <span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.3);color:var(--red);">${failed} failed</span>
-      </div>
-      <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.68rem;">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border2);">
-            <th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Status</th>
-            <th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Event</th>
-            <th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Time (ET)</th>
-            <th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Lock</th>
-            <th style="padding:8px 16px;text-align:right;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Battery</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-    evts.forEach(e => {
-      const ok     = e.success;
-      const dotClr = ok ? '#4caf7d' : '#e05555';
-      const dot    = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dotClr};${ok?'':'box-shadow:0 0 4px '+dotClr+';'}margin-right:6px;vertical-align:middle;"></span>`;
-      html += `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          <td style="padding:7px 16px;color:${dotClr};">${dot}${ok?'OK':'FAIL'}</td>
-          <td style="padding:7px 16px;color:var(--white);">${e.recordLabel}</td>
-          <td style="padding:7px 16px;color:var(--muted);font-variant-numeric:tabular-nums;">${fmtDate(e.isoDate)}</td>
-          <td style="padding:7px 16px;color:var(--muted);">#${e.lockId}</td>
-          <td style="padding:7px 16px;text-align:right;color:var(--muted);">${e.batteryLevel}%</td>
-        </tr>`;
-    });
-
-    html += `</tbody></table></div>
-      <div class="clips-note">Queried from DynamoDB via GET /events?date=${dateFilter} · gsi1 index · ScanIndexForward=false</div>`;
-    wrap.innerHTML = html;
-  }
-
-  // ── Init filter defaults ──────────────────────────────────────────────────
-  function initFilterDefaults() {
-    const today = todayStr();
-    const dateMax = today;
-    const clipsDf = el('clips-date-filter');
-    const evtsDf  = el('events-date-filter');
-    if (clipsDf) { clipsDf.max = dateMax; clipsDf.value = today; }
-    if (evtsDf)  { evtsDf.max  = dateMax; evtsDf.value  = today; }
-  }
-
-  // ── Public API ────────────────────────────────────────────────────────────
-  function init() {
-    if (initialized) return;
-    initialized = true;
-
-    initFilterDefaults();
-
-    const seed = [
-      { label:'Remote unlock via app', success:true },
-      { label:'App lock', success:true },
-      { label:'Bluetooth unlock', success:true },
-      { label:'Remote unlock via app', success:true },
-    ];
-    seed.forEach(e => addLiveEvent(e.label, e.success));
-
-    drawCamera('canvas-front', { showGate:true,  sky:'#080b12' });
-    drawCamera('canvas-back',  { showGate:false, sky:'#09090e' });
-
-    setInterval(() => {
-      const labels = ['Remote unlock via app','App lock','Auto lock','Bluetooth unlock','Remote unlock via app'];
-      addLiveEvent(labels[Math.floor(Math.random()*labels.length)], true);
-    }, 18000);
-  }
-
-  function simulateFail() {
-    if (!initialized) init();
-    const failLabels = ['Keyboard lock-out', 'Face recognition failed', 'Keyboard lock-out'];
-    const label = failLabels[Math.floor(Math.random()*failLabels.length)];
-    totalFails++;
-    failCount++;
-    addLiveEvent(label, false);
-    updateFailUI();
-
-    const canvas = el('canvas-front');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'rgba(224,85,85,0.3)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    if (failCount >= threshold && !alertFired) {
-      alertFired = true;
-      setTimeout(fireAlert, 300);
-    }
-  }
-
-  function setThreshold(n) {
-    threshold = n;
-    el('d-threshold').textContent = n;
-    el('d-attempt-fraction').textContent = failCount + ' / ' + n;
-    [1,3,5].forEach(v => {
-      const btn = el('t'+v);
-      if (!btn) return;
-      if (v===n) btn.style.cssText='font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--teal);background:rgba(42,206,190,.07);color:var(--teal);cursor:pointer;';
-      else btn.style.cssText='font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;';
-    });
-    if (failCount >= threshold && !alertFired) {
-      alertFired = true;
-      setTimeout(fireAlert, 100);
-    }
-  }
-
-  function filterClips() { renderClips(); }
-
-  function reset() {
-    failCount=0; totalFails=0; totalEvents=0; alertFired=false;
-    el('d-total').textContent='0';
-    el('d-fail').textContent='0';
-    el('d-fail').style.color='var(--green)';
-    el('d-fail').className='s-val';
-    el('d-window').textContent='0';
-    el('d-attempt-fraction').textContent='0 / '+threshold;
-    el('d-attempt-bar').style.width='0%';
-    el('d-attempt-bar').style.background='var(--green)';
-    el('d-fail-sub').textContent='last: —';
-    el('d-feed').innerHTML='';
-    clearAlert();
-    el('sms-popup').classList.remove('show');
-  }
-
-  return { init, simulateFail, setThreshold, reset, switchDashTab, filterClips, renderEvents, closePlayer };
+  let initialized=false,threshold=3,failCount=0,totalFails=0,totalEvents=0,alertFired=false,frameTimers=[],playerAnimId=null,allEvents=[];
+  function makeClips(){const clips=[],today=new Date(),cameras=['front-gate','backyard'];for(let d=0;d<7;d++){const dt=new Date(today);dt.setDate(today.getDate()-d);const dateStr=dt.toISOString().slice(0,10);cameras.forEach(cam=>{const count=4+Math.floor(Math.random()*5);for(let i=0;i<count;i++){const h=6+Math.floor(Math.random()*16),m=Math.floor(Math.random()*60),s=Math.floor(Math.random()*60),hh=String(h).padStart(2,'0'),mm=String(m).padStart(2,'0'),ss=String(s).padStart(2,'0'),mb=(18+Math.random()*60).toFixed(1);clips.push({camera:cam,date:dateStr,time:`${hh}:${mm}:${ss}`,sizeBytes:Math.round(parseFloat(mb)*1048576),key:`clips/${cam}/${dateStr.replace(/-/g,'/')}/${hh}-${mm}-${ss}.mp4`});}});}return clips.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));}
+  const ALL_CLIPS=makeClips();
+  const RECORD_LABELS={1:'Bluetooth unlock',2:'App lock',3:'Auto lock',4:'Auto unlock',6:'Keyboard unlock',7:'IC card unlock',12:'Remote unlock via app',47:'Keyboard lock-out',55:'Face recognition failed'};
+  function makeEvents(){const evts=[],today=new Date();for(let d=0;d<7;d++){const dt=new Date(today);dt.setDate(today.getDate()-d);const dateStr=dt.toISOString().slice(0,10);const count=8+Math.floor(Math.random()*14);for(let i=0;i<count;i++){const types=[1,1,1,2,3,4,6,12,12,47,55],type=types[Math.floor(Math.random()*types.length)],fail=type===47||type===55,h=6+Math.floor(Math.random()*16),m=Math.floor(Math.random()*60),s=Math.floor(Math.random()*60),ts=new Date(dt);ts.setHours(h,m,s,0);evts.push({date:dateStr,isoDate:ts.toISOString(),recordType:type,recordLabel:RECORD_LABELS[type]||`Type ${type}`,success:!fail,lockId:12345,batteryLevel:80+Math.floor(Math.random()*20)});}}return evts.sort((a,b)=>b.isoDate.localeCompare(a.isoDate));}
+  let SIM_EVENTS=makeEvents();
+  function el(id){return document.getElementById(id);}
+  function simTime(){return new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/Toronto'});}
+  function fmtDate(iso){return new Date(iso).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/Toronto'});}
+  function todayStr(){return new Date().toISOString().slice(0,10);}
+  function switchDashTab(name,btn){document.querySelectorAll('.dash-tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.dash-tab-content').forEach(c=>c.classList.remove('active'));btn.classList.add('active');el('dash-tab-'+name).classList.add('active');if(name==='clips')renderClips();if(name==='events')renderEvents();}
+  function addLiveEvent(label,success){totalEvents++;el('d-total').textContent=totalEvents;flashCard('d-card-total');const feed=el('d-feed'),row=document.createElement('div');row.className='event-row';row.innerHTML=`<div class="e-dot ${success?'ok':'fail'}"></div><div class="e-body"><div class="e-label">${label}</div></div><div class="e-time">${simTime()}</div>`;feed.insertBefore(row,feed.firstChild);while(feed.children.length>20)feed.removeChild(feed.lastChild);const now=new Date().toISOString();SIM_EVENTS.unshift({date:todayStr(),isoDate:now,recordType:success?1:47,recordLabel:label,success,lockId:12345,batteryLevel:87});}
+  function updateFailUI(){const pct=Math.min(100,(failCount/threshold)*100),bar=el('d-attempt-bar');bar.style.width=pct+'%';bar.style.background=pct>=100?'var(--red)':pct>=60?'var(--yellow)':'var(--green)';el('d-attempt-fraction').textContent=failCount+' / '+threshold;el('d-window').textContent=failCount;const failEl=el('d-fail');failEl.textContent=totalFails;failEl.style.color=totalFails>0?'var(--red)':'var(--green)';el('d-fail-sub').textContent='last: '+simTime();flashCard('d-card-fail');flashCard('d-card-window');}
+  function flashCard(id){const c=el(id);if(!c)return;c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),700);}
+  function fireAlert(){const box=el('d-alert-box');box.classList.remove('hidden');el('d-alert-body').textContent=`Lock #12345: ${failCount}/${threshold} failed attempts in 60-min window.`;el('d-alert-meta').textContent=`SNS SMS dispatched · Time: ${simTime()} ET`;const front=el('cam-front'),badge=el('cam-front-badge');front.classList.add('alert-cam');badge.className='cam-badge alert';badge.textContent='⚠ ALERT';el('sms-body').textContent=`GATE ALERT\nLock #12345: ${failCount}/${threshold} failed attempt${failCount>1?'s':''}.\nTime: ${simTime()} ET\nView: https://cgm.cloudfront.net/?view=events`;const popup=el('sms-popup');popup.classList.add('show');setTimeout(()=>popup.classList.remove('show'),7000);el('d-fail').className='s-val red';}
+  function clearAlert(){const box=el('d-alert-box');if(box)box.classList.add('hidden');const front=el('cam-front'),badge=el('cam-front-badge');if(front)front.classList.remove('alert-cam');if(badge){badge.className='cam-badge live';badge.textContent='● LIVE';}}
+  function drawCamera(canvasId,opts){const canvas=document.getElementById(canvasId);if(!canvas)return;const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;let t=0;function frame(){t++;const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,opts.sky||'#0a0c10');grad.addColorStop(1,'#050608');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(255,255,255,0.6)';for(let i=0;i<30;i++){const sx=((i*137+17)%W),sy=((i*89+23)%(H*0.45)),flicker=0.4+0.6*Math.sin(t*0.05+i);ctx.globalAlpha=flicker;ctx.fillRect(sx,sy,1,1);}ctx.globalAlpha=1;ctx.fillStyle='#111318';ctx.fillRect(0,H*0.6,W,H);if(opts.showGate){ctx.fillStyle='#1c2030';ctx.fillRect(W*0.35,H*0.28,10,H*0.38);ctx.fillRect(W*0.62,H*0.28,10,H*0.38);ctx.strokeStyle=opts.alertMode?'rgba(224,85,85,0.7)':'#2a2f42';ctx.lineWidth=2;for(let b=0;b<5;b++){const bx=W*0.35+10+b*(W*0.27/5)+4;ctx.beginPath();ctx.moveTo(bx,H*0.28);ctx.lineTo(bx,H*0.62);ctx.stroke();}ctx.beginPath();ctx.moveTo(W*0.35,H*0.34);ctx.lineTo(W*0.72,H*0.34);ctx.stroke();ctx.beginPath();ctx.moveTo(W*0.35,H*0.54);ctx.lineTo(W*0.72,H*0.54);ctx.stroke();if(opts.alertMode){ctx.fillStyle=`rgba(224,85,85,${0.6+0.4*Math.sin(t*0.15)})`;ctx.beginPath();ctx.arc(W*0.485,H*0.44,6,0,Math.PI*2);ctx.fill();}}ctx.strokeStyle='rgba(50,180,100,0.04)';ctx.lineWidth=0.5;for(let g=0;g<8;g++){const gy=g*(H/8);ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}for(let g=0;g<12;g++){const gx=g*(W/12);ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}const vig=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.75);vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,0.55)');ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,80,30,0.08)';ctx.fillRect(0,0,W,H);const scanY=(t*1.2)%H;ctx.fillStyle='rgba(100,255,150,0.03)';ctx.fillRect(0,scanY,W,2);}const id=setInterval(frame,80);frameTimers.push(id);}
+  function drawClipThumb(canvas,clip,active){const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;let seed=0;for(let i=0;i<clip.key.length;i++)seed=(seed*31+clip.key.charCodeAt(i))&0xffff;const r=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};const hour=parseInt(clip.time.slice(0,2)),isNight=hour<6||hour>=20,skyBase=isNight?'#07090e':'#1a2a3a';const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,skyBase);grad.addColorStop(1,'#050608');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);if(isNight){ctx.fillStyle='rgba(255,255,255,0.55)';for(let i=0;i<20;i++){ctx.globalAlpha=0.3+r()*0.7;ctx.fillRect(r()*W,r()*H*0.45,1,1);}ctx.globalAlpha=1;}ctx.fillStyle='#111318';ctx.fillRect(0,H*0.6,W,H);if(clip.camera==='front-gate'){ctx.fillStyle='#1c2030';ctx.fillRect(W*0.35,H*0.28,8,H*0.35);ctx.fillRect(W*0.62,H*0.28,8,H*0.35);ctx.strokeStyle=active?'rgba(42,206,190,0.6)':'#252b3e';ctx.lineWidth=1.5;for(let b=0;b<5;b++){const bx=W*0.35+8+b*(W*0.27/5)+3;ctx.beginPath();ctx.moveTo(bx,H*0.28);ctx.lineTo(bx,H*0.58);ctx.stroke();}ctx.beginPath();ctx.moveTo(W*0.35,H*0.32);ctx.lineTo(W*0.72,H*0.32);ctx.stroke();ctx.beginPath();ctx.moveTo(W*0.35,H*0.50);ctx.lineTo(W*0.72,H*0.50);ctx.stroke();}else{ctx.fillStyle='#0c0e14';for(let i=0;i<4;i++){const bx=20+i*(W/4),bw=20+r()*30,bh=15+r()*25;ctx.beginPath();ctx.arc(bx,H*0.6,bw/2,Math.PI,0);ctx.fill();}}if(isNight){ctx.fillStyle='rgba(20,80,30,0.1)';ctx.fillRect(0,0,W,H);}const vig=ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.7);vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(224,85,85,0.8)';ctx.beginPath();ctx.arc(8,8,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='7px DM Mono, monospace';ctx.fillText('REC',15,12);}
+  function renderClips(){const camFilter=(el('clips-cam-filter')?.value||''),dateFilter=(el('clips-date-filter')?.value||'');let clips=ALL_CLIPS;if(camFilter)clips=clips.filter(c=>c.camera===camFilter);if(dateFilter)clips=clips.filter(c=>c.date===dateFilter);const grid=el('clips-grid');grid.innerHTML='';if(clips.length===0){grid.innerHTML='<div class="clips-empty">No clips found for this filter combination</div>';return;}clips.forEach((clip,idx)=>{const card=document.createElement('div');card.className='clip-card';card.id='clip-card-'+idx;const mb=(clip.sizeBytes/1048576).toFixed(1),dur=Math.round(clip.sizeBytes/(1048576*0.35)),durStr=Math.floor(dur/60)+':'+String(dur%60).padStart(2,'0');card.innerHTML=`<div class="clip-thumb"><canvas id="clip-thumb-${idx}" width="180" height="101"></canvas><div class="clip-thumb-play"><span class="clip-play-icon">▶</span></div><div class="clip-duration-badge">${durStr}</div></div><div class="clip-meta"><span class="clip-cam">${clip.camera}</span><span class="clip-time">${clip.time}</span><span class="clip-size">${mb} MB · ${clip.date}</span></div>`;card.addEventListener('click',()=>openClipPlayer(clip,idx,clips));grid.appendChild(card);requestAnimationFrame(()=>{const canvas=el('clip-thumb-'+idx);if(canvas)drawClipThumb(canvas,clip,false);});});el('clips-note').textContent=`${clips.length} clip${clips.length!==1?'s':''} found · Stored in s3://cgm-video/clips/{camera}/{date}/ · Each served via 15-min S3 presigned URL`;}
+  let playerCanvasTimer=null;
+  function openClipPlayer(clip,idx,clips){document.querySelectorAll('.clip-card').forEach(c=>c.classList.remove('active'));const card=el('clip-card-'+idx);if(card)card.classList.add('active');const player=el('clips-player');player.style.display='block';const mb=(clip.sizeBytes/1048576).toFixed(1);el('clips-player-title').textContent=`${clip.camera} — ${clip.date} ${clip.time}`;el('clips-player-meta').textContent=`${mb} MB  ·  s3://cgm-video/${clip.key}`;el('clips-dl-btn').onclick=()=>{alert(`In production: downloads ${clip.key} via S3 presigned URL (15-min TTL).\n\nURL format:\nhttps://d1234.cloudfront.net/${clip.key}?X-Amz-Expires=900&…`);};const canvas=el('clips-player-canvas');canvas.width=canvas.offsetWidth||800;canvas.height=270;if(playerCanvasTimer)clearInterval(playerCanvasTimer);let t=0;playerCanvasTimer=setInterval(()=>{t++;drawClipThumb(canvas,clip,false);const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,elapsed=(t*0.08)%300,pct=elapsed/300;ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,H-20,W,20);ctx.fillStyle='#2acebe';ctx.fillRect(0,H-3,W*pct,3);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fillRect(W*pct,H-3,W*(1-pct),3);const mm=String(Math.floor(elapsed/60)).padStart(2,'0'),ss=String(Math.floor(elapsed%60)).padStart(2,'0');ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='11px DM Mono, monospace';ctx.fillText(`${clip.time.slice(0,5)} + ${mm}:${ss}`,10,H-6);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.font='10px DM Mono, monospace';ctx.fillText('SIMULATED PLAYBACK',W-140,H-6);},80);}
+  function closePlayer(){if(playerCanvasTimer){clearInterval(playerCanvasTimer);playerCanvasTimer=null;}const player=el('clips-player');if(player)player.style.display='none';document.querySelectorAll('.clip-card').forEach(c=>c.classList.remove('active'));}
+  function renderEvents(){const dateFilter=el('events-date-filter')?.value||todayStr(),evts=SIM_EVENTS.filter(e=>e.date===dateFilter),wrap=el('events-table-wrap'),failed=evts.filter(e=>!e.success).length,success=evts.length-failed;if(evts.length===0){wrap.innerHTML='<div class="clips-empty">No events for this date</div>';return;}let html=`<div style="display:flex;gap:8px;padding:10px 16px 6px;flex-wrap:wrap;"><span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:var(--panel2);border:1px solid var(--border2);color:var(--muted);">${evts.length} total</span><span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.3);color:var(--green);">${success} ok</span><span style="font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:3px;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.3);color:var(--red);">${failed} failed</span></div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.68rem;"><thead><tr style="border-bottom:1px solid var(--border2);"><th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Status</th><th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Event</th><th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Time (ET)</th><th style="padding:8px 16px;text-align:left;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Lock</th><th style="padding:8px 16px;text-align:right;color:var(--muted);font-weight:400;letter-spacing:0.1em;text-transform:uppercase;font-size:0.58rem;">Battery</th></tr></thead><tbody>`;evts.forEach(e=>{const ok=e.success,dotClr=ok?'#4caf7d':'#e05555',dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dotClr};${ok?'':'box-shadow:0 0 4px '+dotClr+';'}margin-right:6px;vertical-align:middle;"></span>`;html+=`<tr style="border-bottom:1px solid rgba(255,255,255,0.03);"><td style="padding:7px 16px;color:${dotClr};">${dot}${ok?'OK':'FAIL'}</td><td style="padding:7px 16px;color:var(--white);">${e.recordLabel}</td><td style="padding:7px 16px;color:var(--muted);font-variant-numeric:tabular-nums;">${fmtDate(e.isoDate)}</td><td style="padding:7px 16px;color:var(--muted);">#${e.lockId}</td><td style="padding:7px 16px;text-align:right;color:var(--muted);">${e.batteryLevel}%</td></tr>`;});html+=`</tbody></table></div><div class="clips-note">Queried from DynamoDB via GET /events?date=${dateFilter} · gsi1 index · ScanIndexForward=false</div>`;wrap.innerHTML=html;}
+  function initFilterDefaults(){const today=todayStr(),dateMax=today,clipsDf=el('clips-date-filter'),evtsDf=el('events-date-filter');if(clipsDf){clipsDf.max=dateMax;clipsDf.value=today;}if(evtsDf){evtsDf.max=dateMax;evtsDf.value=today;}}
+  function init(){if(initialized)return;initialized=true;initFilterDefaults();const seed=[{label:'Remote unlock via app',success:true},{label:'App lock',success:true},{label:'Bluetooth unlock',success:true},{label:'Remote unlock via app',success:true}];seed.forEach(e=>addLiveEvent(e.label,e.success));drawCamera('canvas-front',{showGate:true,sky:'#080b12'});drawCamera('canvas-back',{showGate:false,sky:'#09090e'});setInterval(()=>{const labels=['Remote unlock via app','App lock','Auto lock','Bluetooth unlock','Remote unlock via app'];addLiveEvent(labels[Math.floor(Math.random()*labels.length)],true);},18000);}
+  function simulateFail(){if(!initialized)init();const failLabels=['Keyboard lock-out','Face recognition failed','Keyboard lock-out'],label=failLabels[Math.floor(Math.random()*failLabels.length)];totalFails++;failCount++;addLiveEvent(label,false);updateFailUI();const canvas=el('canvas-front');if(canvas){const ctx=canvas.getContext('2d');ctx.fillStyle='rgba(224,85,85,0.3)';ctx.fillRect(0,0,canvas.width,canvas.height);}if(failCount>=threshold&&!alertFired){alertFired=true;setTimeout(fireAlert,300);}}
+  function setThreshold(n){threshold=n;el('d-threshold').textContent=n;el('d-attempt-fraction').textContent=failCount+' / '+n;[1,3,5].forEach(v=>{const btn=el('t'+v);if(!btn)return;if(v===n)btn.style.cssText='font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--teal);background:rgba(42,206,190,.07);color:var(--teal);cursor:pointer;';else btn.style.cssText='font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .2s;';});if(failCount>=threshold&&!alertFired){alertFired=true;setTimeout(fireAlert,100);}}
+  function filterClips(){renderClips();}
+  function reset(){failCount=0;totalFails=0;totalEvents=0;alertFired=false;el('d-total').textContent='0';el('d-fail').textContent='0';el('d-fail').style.color='var(--green)';el('d-fail').className='s-val';el('d-window').textContent='0';el('d-attempt-fraction').textContent='0 / '+threshold;el('d-attempt-bar').style.width='0%';el('d-attempt-bar').style.background='var(--green)';el('d-fail-sub').textContent='last: —';el('d-feed').innerHTML='';clearAlert();el('sms-popup').classList.remove('show');}
+  return{init,simulateFail,setThreshold,reset,switchDashTab,filterClips,renderEvents,closePlayer};
 })();
 
-// Timestamp updater
-setInterval(() => {
-  const t = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/Toronto'});
-  const f = document.getElementById('cam-front-ts');
-  const b = document.getElementById('cam-back-ts');
-  if(f) f.textContent=t;
-  if(b) b.textContent=t;
-}, 1000);
+setInterval(()=>{const t=new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/Toronto'});const f=document.getElementById('cam-front-ts'),b=document.getElementById('cam-back-ts');if(f)f.textContent=t;if(b)b.textContent=t;},1000);
 </script>
 </body>
 </html>
